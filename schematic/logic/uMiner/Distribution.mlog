@@ -1,0 +1,753 @@
+# Initializing
+
+    # Player Input vars
+
+        print "priotize type, 0 to disable, higher value higher priotize to mine"
+            set pCopper 1
+            set pLead 1
+            set pTitanium 1
+            set pCoal 1
+            set pSand 1
+            set pScrap 1
+        set maxValue 0x7fffffff
+        set minRes%2 25
+        set minRes%1 33.33333333333333
+        set minRes% 90
+        set maxMinRes2 25000
+        set maxMinRes1 33000
+        set maxMinRes maxValue
+        set idle 5
+        set run 14
+        print "Required: unit MUST : flying, able to ulocate ore, not in player controlled and not in formation"
+        ubind @mono
+        print "End of player input vars"
+
+    # convert vars
+
+        op div minRes%2 100 minRes%2
+        op div minRes%1 100 minRes%1
+        op div minRes% 100 minRes%
+
+        # more units to mine for higher ore hardness
+        op mul pCopper pCopper 1.3
+        op mul pLead pLead 1.3
+        op mul pTitanium pTitanium 1.9
+        op mul pCoal pCoal 1.5
+
+        op add temp pCopper pLead
+        op add temp temp pTitanium
+        op add temp temp pCoal
+        op add temp temp pSand
+        op add temp temp pScrap
+        op div pCopper pCopper temp
+        op div pLead pLead temp
+        op div pTitanium pTitanium temp
+        op div pCoal pCoal temp
+        op div pSand pSand temp
+        op div pScrap pScrap temp
+
+        set uType @unit
+
+# Bind and check unit and core
+    return:
+    sensor uDead @unit @dead
+    jump ub_check strictEqual uDead false
+
+        uBind:
+            ubind uType
+
+            ub_check:
+            sensor uCont @unit @controlled
+        jump uBind greaterThanEq uCont 2
+
+    sensor bcDead bCore @dead
+    jump ores_vars strictEqual bcDead false
+
+        ulocate building core false 0 0 0 0 bCore
+        jump return always 0
+
+# If ore exist, use value of res at core, else set value into maxValue
+
+    ores_vars:
+    jump t1 equal pCopper 0
+
+        ulocate ore core 0 @copper 0 0 temp 0
+        sensor iCopper bCore @copper
+        jump t2 equal temp true
+
+    t1:
+    set iCopper maxValue
+
+    t2:
+    jump t3 equal pLead 0
+
+        ulocate ore core 0 @lead 0 0 temp 0
+        sensor iLead bCore @lead
+        jump t4 equal temp true
+
+    t3:
+    set iLead maxValue
+
+    t4:
+    jump t5 equal pTitanium 0
+
+        ulocate ore core 0 @titanium 0 0 temp 0
+        sensor iTitanium bCore @titanium
+        jump t6 equal temp true
+
+    t5:
+    set iTitanium maxValue
+
+    t6:
+    jump t7 equal pCoal 0
+
+        ulocate ore core 0 @titanium 0 0 temp 0
+        sensor iCoal bCore @titanium
+        jump t8 equal temp true
+
+    t7:
+    set iCoal maxValue
+
+    t8:
+    jump t9 equal pSand
+        ulocate ore core 0 @sand 0 0 temp 0
+        sensor iSand bCore @sand
+        jump t10 equal temp true
+
+    t9:
+    set iSand maxValue
+
+    t10:
+    jump t11 equal pScrap 0
+
+        ulocate ore core 0 @scrap 0 0 temp 0
+        sensor iScrap bCore @scrap
+        jump bciCap_vars equal temp true
+
+    t11:
+    set iScrap maxValue
+
+# Import vars from cell and prepare things
+
+    bciCap_vars:
+    sensor bciCap bCore @itemCapacity
+    op idiv bciCap%2 bciCap minRes%2
+    op min bciCap%2 bciCap%2 maxMinRes2
+    op idiv bciCap%1 bciCap minRes%1
+    op min bciCap%1 bciCap%1 maxMinRes1
+    op idiv bciCap% bciCap minRes%
+    op min bciCap% bciCap% maxMinRes
+
+    read utQuasar cell1 50
+    read utMega cell1 51
+    read utPulsar cell1 52
+    read utPoly cell1 53
+    read utMono cell1 54
+    op add utT2T1 utPulsar utPoly
+    op add utT2T1 utT2T1 utMono 
+    op add utT3 utQuasar utMega
+    op add uTotal utT2T1 utT3
+
+# Distribute units order by ore amount and player input
+
+    # Quasar
+
+        op sub diCopper bciCap%2 iCopper
+        op sub diLead bciCap%2 iLead
+        op sub diTitanium bciCap%2 iTitanium
+
+        set diCoal 0
+        set diSand 0
+        set diScrap 0
+
+        op max temp diCopper diLead
+        op max temp temp diTitanium
+        jump calculate_t3 greaterThan temp 0
+
+            op sub diCopper bciCap%1 iCopper
+            op sub diLead bciCap%1 iLead
+            op sub diTitanium bciCap%1 iTitanium
+            op sub diCoal bciCap%1 iCoal
+            op sub diSand bciCap%1 iSand
+
+            op max temp diCopper diLead
+            op max temp temp diTitanium
+            op max temp temp diCoal
+            op max temp temp diSand
+            jump calculate_t3 greaterThan temp 0
+
+                op sub diCopper bciCap% iCopper
+                op sub diLead bciCap% iLead
+                op sub diTitanium bciCap% iTitanium
+                op sub diCoal bciCap% iCoal
+                op sub diSand bciCap% iSand
+                op sub diScrap bciCap% iScrap
+
+                op max temp diCopper diLead
+                op max temp temp diTitanium
+                op max temp temp diCoal
+                op max temp temp diSand
+                op max temp temp diScrap
+                jump calculate_t3 greaterThan temp 0
+
+                    set d%iCopper 1
+                    set d%iLead 1
+                    set d%iCoal 1
+                    set d%iSand 1
+                    set d%iScrap 1
+                    set statusT3 idle
+                    jump skip_t3 always 0 0
+
+        calculate_t3:
+        set statusT3 run
+
+        op max diCopper diCopper 0
+        op max diLead diLead 0
+        op max diTitanium diTitanium 0
+        op max diCoal diCoal 0
+        op max diSand diSand 0
+        op max diScrap diScrap 0
+
+        op mul diCopper diCopper pCopper
+        op mul diLead diLead pLead
+        op mul diTitanium diTitanium pTitanium
+        op mul diCoal diCoal pCoal
+        op mul diSand diSand pSand
+        op mul diScrap diScrap pScrap
+
+        op add drTotal diCopper diLead
+        op add drTotal drTotal diTitanium
+        op add drTotal drTotal diCoal
+        op add drTotal drTotal diSand
+        op add drTotal drTotal diScrap
+        op div diCopper diCopper drTotal
+        op div diLead diLead drTotal
+        op div diTitanium diTitanium drTotal
+        op div diCoal diCoal drTotal
+        op div diSand diSand drTotal
+        op div diScrap diScrap drTotal
+
+        op mul diCopper diCopper uTotal
+        op mul diLead diLead uTotal
+        op mul diTitanium diTitanium uTotal
+        op mul diCoal diCoal uTotal
+        op mul diSand diSand uTotal
+        op mul diScrap diScrap uTotal
+
+        op add diCopper diCopper .5
+        op add diLead diLead .5
+        op add diTitanium diTitanium .5
+        op add diCoal diCoal .5
+        op add diSand diSand .5
+        op add diScrap diScrap .5
+        op floor diCopper diCopper 0
+        op floor diLead diLead 0
+        op floor diTitanium diTitanium 0
+        op floor diCoal diCoal 0
+        op floor diSand diSand 0
+        op floor diScrap diScrap 0
+
+        # Based on hardness
+        op min oiTitanium utQuasar diTitanium
+
+        op sub ulQuasar utQuasar oiTitanium
+        op min oiCoal ulQuasar diCoal
+
+        op sub ulQuasar ulQuasar oiCoal
+        op min oiCopper ulQuasar diCopper
+
+        op sub ulQuasar ulQuasar oiCopper
+        op min oiLead ulQuasar diLead
+
+        op sub ulQuasar ulQuasar oiLead
+        op min oiSand ulQuasar diSand
+
+        op sub ulQuasar ulQuasar oiSand
+        op min oiScrap ulQuasar diScrap
+
+        op sub ulQuasar ulQuasar oiScrap
+        jump quasar_out equal ulQuasar 0
+
+            # if ulQuasar > 0, add into one of of resource to prevent chain bind
+            jump t12 equal oiScrap 0
+
+                op add oiScrap oiScrap ulQuasar
+                jump quasar_out always 0 0
+
+            t12:
+            jump t13 equal oiSand 0
+
+                op add oiSand oiSand ulQuasar
+                jump quasar_out always 0 0
+
+            t13:
+            jump t14 equal oiLead 0
+
+                op add oiLead oiLead ulQuasar
+                jump quasar_out always 0 0
+
+            t14:
+            jump t15 equal oiCopper 0
+
+                op add oiCopper oiCopper ulQuasar
+                jump quasar_out always 0 0
+
+            t15:
+            jump t16 equal oiCoal 0
+
+                op add oiCoal oiCoal ulQuasar
+                jump quasar_out always 0 0
+
+            t16:
+            op add oiTitanium oiTitanium ulQuasar
+
+        quasar_out:
+        write oiCopper cell1 0
+        write oiLead cell1 1
+        write oiTitanium cell1 2
+        write oiCoal cell1 3
+        write oiSand cell1 4
+        write oiScrap cell1 5
+
+    # Mega
+
+        op sub d2iCopper diCopper oiCopper
+        op sub d2iLead diLead oiLead
+        op sub d2iTitanium diTitanium oiTitanium
+        op sub d2iCoal diCoal oiCoal
+        op sub d2iSand diSand oiSand
+        op sub d2iScrap diScrap oiScrap
+
+        op min o2iTitanium utMega d2iTitanium
+
+        op sub ulMega utMega o2iTitanium
+        op min o2iCoal ulMega d2iCoal
+
+        op sub ulMega ulMega o2iCoal
+        op min o2iCopper ulMega d2iCopper
+
+        op sub ulMega ulMega o2iCopper
+        op min o2iLead ulMega d2iLead
+
+        op sub ulMega ulMega o2iLead
+        op min o2iSand ulMega d2iSand
+
+        op sub ulMega ulMega o2iSand
+        op min o2iScrap ulMega d2iScrap
+
+        op sub ulMega ulMega o2iScrap
+        jump mega_out equal ulMega 0
+
+            jump t17 equal o2iScrap 0
+
+                op add o2iScrap o2iScrap ulMega
+                jump mega_out always 0 0
+
+            t17:
+            jump t18 equal o2iSand 0
+
+                op add o2iSand o2iSand ulMega
+                jump mega_out always 0 0
+
+            t18:
+            jump t19 equal o2iLead 0
+
+                op add o2iLead o2iLead ulMega
+                jump mega_out always 0 0
+
+            t19:
+            jump t20 equal o2iCopper 0
+
+                op add o2iCopper o2iCopper ulMega
+                jump mega_out always 0 0
+
+            t20:
+            jump t21 equal o2iCoal 0
+
+                op add o2iCoal o2iCoal ulMega
+                jump mega_out always 0 0
+
+            t21:
+            op add o2iTitanium o2iTitanium ulMega
+
+        mega_out:
+        write o2iCopper cell1 6
+        write o2iLead cell1 7
+        write o2iTitanium cell1 8
+        write o2iCoal cell1 9
+        write o2iSand cell1 10
+        write o2iScrap cell1 11
+    
+    # pulsar
+
+        # if the dist res got below expectation, will transfer into here by percentage
+
+            op add d%iCopper oiCopper o2iCopper
+            op add d%iLead oiLead o2iLead
+            op add d%iCoal oiCoal o2iCoal
+            op add d%iSand oiSand o2iSand
+            op add d%iScrap oiScrap o2iScrap
+
+            op div d%iCopper d%iCopper diCopper
+            op div d%iLead d%iLead diLead
+            op div d%iCoal d%iCoal diCoal
+            op div d%iSand d%iSand diSand
+            op div d%iScrap d%iScrap diScrap
+
+            op sub d%iCopper 1 d%iCopper
+            op sub d%iLead 1 d%iLead
+            op sub d%iCoal 1 d%iCoal
+            op sub d%iSand 1 d%iSand
+            op sub d%iScrap 1 d%iScrap
+
+        skip_t3:
+        set diCoal 0
+        set diSand 0
+        set diScrap 0
+
+        op sub diCopper bciCap%2 iCopper
+        op sub diLead bciCap%2 iLead
+
+        op max temp diCopper diLead
+        jump calculate_t2 greaterThan temp 0
+
+            op sub diCopper bciCap%1 iCopper
+            op sub diLead bciCap%1 iLead
+            op sub diCoal bciCap%1 iCoal
+            op sub diSand bciCap%1 iSand
+
+            op max temp diCopper diLead
+            op max temp temp diCoal
+            op max temp temp diSand
+            jump calculate_t2 greaterThan temp 0
+
+                op sub diCopper bciCap% iCopper
+                op sub diLead bciCap% iLead
+                op sub diCoal bciCap% iCoal
+                op sub diSand bciCap% iSand
+                op sub diScrap bciCap% iScrap
+
+                op max temp diCopper diLead
+                op max temp temp diCoal
+                op max temp temp diSand
+                op max temp temp diScrap
+                jump calculate_t2 greaterThan temp 0
+
+                    set d%iCopper 1
+                    set d%iLead 1
+                    set d%iSand 1
+                    set d%iScrap 1
+                    set statusT2 idle
+                    jump skip_t2 always 0 0
+
+        calculate_t2:
+        set statusT2 run
+
+        op max diCopper diCopper 0
+        op max diLead diLead 0
+        op max diCoal diCoal 0
+        op max diSand diSand 0
+        op max diScrap diScrap 0
+
+        op mul diCopper diCopper pCopper
+        op mul diLead diLead pLead
+        op mul diCoal diCoal pCoal
+        op mul diSand diSand pSand
+        op mul diScrap diScrap pScrap
+
+        op mul diCopper diCopper d%iCopper
+        op mul diLead diLead d%iLead
+        op mul diCoal diCoal d%iCoal
+        op mul diSand diSand d%iSand
+        op mul diScrap diScrap d%iScrap
+
+        op add drTotal diCopper diLead
+        op add drTotal drTotal diCoal
+        op add drTotal drTotal diSand
+        op add drTotal drTotal diScrap
+        op div diCopper diCopper drTotal
+        op div diLead diLead drTotal
+        op div diCoal diCoal drTotal
+        op div diSand diSand drTotal
+        op div diScrap diScrap drTotal
+
+        op mul diCopper diCopper utT2T1
+        op mul diLead diLead utT2T1
+        op mul diCoal diCoal utT2T1
+        op mul diSand diSand utT2T1
+        op mul diScrap diScrap utT2T1
+
+        op add diCopper diCopper .5
+        op add diLead diLead .5
+        op add diCoal diCoal .5
+        op add diSand diSand .5
+        op add diScrap diScrap .5
+        op floor diCopper diCopper 0
+        op floor diLead diLead 0
+        op floor diCoal diCoal 0
+        op floor diSand diSand 0
+        op floor diScrap diScrap 0
+
+        op min oiCoal utPulsar diCoal
+
+        op sub ulPulsar utPulsar oiCoal
+        op min oiCopper ulPulsar diCopper
+
+        op sub ulPulsar ulPulsar oiCopper
+        op min oiLead ulPulsar diLead
+
+        op sub ulPulsar ulPulsar oiLead
+        op min oiSand ulPulsar diSand
+
+        op sub ulPulsar ulPulsar oiSand
+        op min oiScrap ulPulsar diScrap
+
+        op sub ulPulsar ulPulsar oiScrap
+        jump pulsar_out equal ulPulsar 0
+
+            jump t22 equal oiScrap 0
+
+                op add oiScrap oiScrap ulPulsar
+                jump pulsar_out always 0 0
+
+            t22:
+            jump t23 equal oiSand 0
+
+                op add oiSand oiSand ulPulsar
+                jump pulsar_out always 0 0
+
+            t23:
+            jump t24 equal oiLead 0
+
+                op add oiLead oiLead ulPulsar
+                jump pulsar_out always 0 0
+
+            t24:
+            jump t25 equal oiCopper 0
+
+                op add oiCopper oiCopper ulPulsar
+                jump pulsar_out always 0 0
+
+            t25:
+            op add oiCoal oiCoal ulPulsar
+
+        pulsar_out:
+        write oiCopper cell1 12
+        write oiLead cell1 13
+        write oiCoal cell1 15
+        write oiSand cell1 16
+        write oiScrap cell1 17
+
+    # Poly
+
+        op sub d2iCopper diCopper oiCopper
+        op sub d2iLead diLead oiLead
+        op sub d2iCoal diCoal oiCoal
+        op sub d2iSand diSand oiSand
+        op sub d2iScrap diScrap oiScrap
+
+        op min o2iCoal utPoly d2iCoal
+
+        op sub ulPoly utPoly o2iCoal
+        op min o2iCopper ulPoly d2iCopper
+
+        op sub ulPoly ulPoly o2iCopper
+        op min o2iLead ulPoly d2iLead
+
+        op sub ulPoly ulPoly o2iLead
+        op min o2iSand ulPoly d2iSand
+
+        op sub ulPoly ulPoly o2iSand
+        op min o2iScrap ulPoly d2iScrap
+
+        op sub ulPoly ulPoly o2iScrap
+        jump poly_out equal ulPoly 0
+
+            jump t26 equal o2iScrap 0
+
+                op add o2iScrap o2iScrap ulPoly
+                jump poly_out always 0 0
+
+            t26:
+            jump t27 equal o2iSand 0
+
+                op add o2iSand o2iSand ulPoly
+                jump poly_out always 0 0
+
+            t27:
+            jump t28 equal o2iLead 0
+
+                op add o2iLead o2iLead ulPoly
+                jump poly_out always 0 0
+
+            t28:
+            jump t29 equal o2iCopper 0
+
+                op add o2iCopper o2iCopper ulPoly
+                jump poly_out always 0 0
+
+            t29:
+            op add o2iCoal o2iCoal ulPoly
+
+        poly_out:
+        write o2iCopper cell1 18
+        write o2iLead cell1 19
+        write o2iCoal cell1 21
+        write o2iSand cell1 22
+        write o2iScrap cell1 23
+    
+    # Mono
+
+            op add d%iCopper oiCopper o2iCopper
+            op add d%iLead oiLead o2iLead
+            op add d%iSand oiSand o2iSand
+            op add d%iScrap oiScrap o2iScrap
+
+            op div d%iCopper d%iCopper diCopper
+            op div d%iLead d%iLead diLead
+            op div d%iSand d%iSand diSand
+            op div d%iScrap d%iScrap diScrap
+
+            op sub d%iCopper 1 d%iCopper
+            op sub d%iLead 1 d%iLead
+            op sub d%iSand 1 d%iSand
+            op sub d%iScrap 1 d%iScrap
+
+        skip_t2:
+        set diSand 0
+        set diScrap 0
+
+        op sub diCopper bciCap%2 iCopper
+        op sub diLead bciCap%2 iLead
+
+        op max temp diCopper diLead
+        jump calculate_t1 greaterThan temp 0
+
+            op sub diCopper bciCap%1 iCopper
+            op sub diLead bciCap%1 iLead
+            op sub diSand bciCap%1 iSand
+
+            op max temp diCopper diLead
+            op max temp temp diSand
+            jump calculate_t1 greaterThan temp 0
+
+                op sub diCopper bciCap% iCopper
+                op sub diLead bciCap% iLead
+                op sub diSand bciCap% iSand
+                op sub diScrap bciCap% iScrap
+
+                op max temp diCopper diLead
+                op max temp temp diSand
+                op max temp temp diScrap
+                jump calculate_t1 greaterThan temp 0
+
+                    set d%iCopper 1
+                    set d%iLead 1
+                    set d%iSand 1
+                    set d%iScrap 1
+                    set statusT1 idle
+                    jump skip_t1 always 0 0
+
+        calculate_t1:
+        set statusT1 run
+
+        op max diCopper diCopper 0
+        op max diLead diLead 0
+        op max diSand diSand 0
+        op max diScrap diScrap 0
+
+        op mul diCopper diCopper pCopper
+        op mul diLead diLead pLead
+        op mul diSand diSand pSand
+        op mul diScrap diScrap pScrap
+
+        op mul diCopper diCopper d%iCopper
+        op mul diLead diLead d%iLead
+        op mul diSand diSand d%iSand
+        op mul diScrap diScrap d%iScrap
+
+        op add drTotal diCopper diLead
+        op add drTotal drTotal diSand
+        op add drTotal drTotal diScrap
+        op div diCopper diCopper drTotal
+        op div diLead diLead drTotal
+        op div diSand diSand drTotal
+        op div diScrap diScrap drTotal
+
+        op mul diCopper diCopper utMono
+        op mul diLead diLead utMono
+        op mul diSand diSand utMono
+        op mul diScrap diScrap utMono
+
+        op add diCopper diCopper .5
+        op add diLead diLead .5
+        op add diSand diSand .5
+        op add diScrap diScrap .5
+        op floor diCopper diCopper 0
+        op floor diLead diLead 0
+        op floor diSand diSand 0
+        op floor diScrap diScrap 0
+
+        op min oiCopper utMono diCopper
+
+        op sub ulMono utMono oiCopper
+        op min oiLead ulMono diLead
+
+        op sub ulMono ulMono oiLead
+        op min oiSand ulMono diSand
+
+        op sub ulMono ulMono oiSand
+        op min oiScrap ulMono diScrap
+
+        op sub ulMono ulMono oiScrap
+        jump mono_out equal ulMono 0
+
+            jump t30 equal oiScrap 0
+
+                op add oiScrap oiScrap ulMono
+                jump mono_out always 0 0
+
+            t30:
+            jump t31 equal oiSand 0
+
+                op add oiSand oiSand ulMono
+                jump mono_out always 0 0
+
+            t31:
+            jump t32 equal oiLead 0
+
+                op add oiLead oiLead ulMono
+                jump mono_out always 0 0
+
+            t32:
+            op add oiCopper oiCopper ulMono
+
+
+        mono_out:
+        write oiCopper cell1 24
+        write oiLead cell1 25
+        write oiSand cell1 28
+        write oiScrap cell1 29
+
+    skip_t1:
+
+# enable units
+
+    op land euQuasar utQuasar 1
+    op mul euQuasar euQuasar statusT3
+    write euQuasar cell1 58
+    op land euMega utMega 1
+    op mul euMega euMega statusT3
+    write euMega cell1 59
+    op land euPulsar utPulsar 1
+    op mul euPulsar euPulsar statusT2
+    write euPulsar cell1 60
+    op land euPoly utPoly 1
+    op mul euPoly euPoly statusT2
+    write euPoly cell1 61
+    op land euMono utMono 1
+    op mul euMono euMono statusT1
+    write euMono cell1 62
+    jump return always 0 0
+    set "Logic_for_5_utype_miner_by:" "Username#3530"
+    set "Logic_for_5_utype_miner_by:" "Zxtej"
