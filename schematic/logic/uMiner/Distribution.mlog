@@ -2,37 +2,41 @@
 
     # Player Input vars
         print "                                                                \n                                                                \n                                                                \n                                                                "
-        print "Statement type"
+        set maxValue 0x1000000000000
+        print "Statement type, true/false"
             set euQuasar true
             set euMega true
             set euPulsar true
             set euPoly true
             set euMono true
-        print "Priotize type, 0 to disable, higher value higher priotize to mine"
+        print "Priotize type, 0 to disable, set higher value for higher priotize resource to mine"
             set pCopper 1
             set pLead 1
             set pTitanium 1
             set pCoal 1
             set pSand 1
-            set pScrap 1
-        set maxValue 0x7fffffff
-        print "Core capacity item stored %, will not mine if lower, listed in msg info"
+            set pScrap .25
+        print "Resources amplifier in power, for unit to mine more for lower res"
+            set ampRes 1.5
+        print "Core capacity item stored in %, unit will not mine if lower, listed in msg info"
             set minRes%2 25
             set minRes%1 33.33333333333333
             set minRes% 90
-        print "Maximum value of minRes%, incase core capacity endermeously high"
+        print "Maximum value of minRes%, incase core capacity incredibly high"
             set maxMinRes2 25000
             set maxMinRes1 33000
             set maxMinRes maxValue
         print "Jump direction into processor controlling, Please ignore this"
-            set usRun 24
-            print "rally at: core, command-center"
+            set usRun 27
+            print "rally at: here, core, command-center"
+                set hereRally 11
                 set bcuRally 10         #buildingCoreUnitRally
                 set bcCuRally 9         #BuildingCommand-centerUnitRally
         print "Default configuration"
             set usRally bcCuRally           #unitStatusRally
         print "End of player input vars"
         print "ABSOLUTELY no change stuff below, except you know what you doing"
+        printflush message1
 
     # convert vars
 
@@ -65,12 +69,12 @@
     jump bsConfig_update notEqual bsConfig null
 
         print "[slate]5 uType Miner \n[sky]By : Username#3530[][]\n[#ff]disabled[]\n\n :  disable\n  show \n  show each distribution\n  show pefo. and total dist.\n  rally on //release\n\nother configuration on "
-        write 0 cell1 58
-        write 0 cell1 59
-        write 0 cell1 60
-        write 0 cell1 61
-        write 0 cell1 62
-        write 0 cell1 63
+        write 0 cell1 48
+        write 0 cell1 49
+        write 0 cell1 50
+        write 0 cell1 51
+        write 0 cell1 52
+        write 0 cell1 53
         jump print_flush always 0 0
 
     bsConfig_update:
@@ -81,21 +85,27 @@
 
             control config sorter1 @surge-alloy
             sensor bsConfig sorter1 @config
+            jump usRally_core notEqual usRally 0
+
+                set usRally hereRally
+                jump switch_factory always 0 0
+
+            usRally_core:
+            jump usRally_commandCenter notEqual usRally hereRally
+
+                set usRally bcuRally
+                jump switch_factory always 0 0
+
+            usRally_commandCenter:
             jump usRally_idle notEqual usRally bcuRally
 
                 set usRally bcCuRally
                 jump switch_factory always 0 0
 
             usRally_idle:
-            jump usRally_core notEqual usRally bcCuRally
+            jump switch_factory notEqual usRally bcCuRally
 
                 set usRally 0
-                jump switch_factory always 0 0
-
-            usRally_core:
-            jump switch_factory notEqual usRally 0
-
-                set usRally bcuRally
 
         switch_factory:         #idk if i commit add it
 
@@ -108,12 +118,12 @@
     jump check_uMono lessThan @time timeout
 
         print "[slate]5 uType Mine\n[sky]By : Username#3530[][]\n[#ff][] timeout trying to bind //\n\n :  disable\n  show \n  show each distribution\n  show pefo. and status\n  rally on //release\n\nother configuration on "
-        write 0 cell1 58
-        write 0 cell1 59
-        write 0 cell1 60
-        write 0 cell1 61
-        write 0 cell1 62
-        write 0 cell1 63
+        write 0 cell1 48
+        write 0 cell1 49
+        write 0 cell1 50
+        write 0 cell1 51
+        write 0 cell1 52
+        write 0 cell1 53
         jump print_flush always 0 0
 
     check_uMono:
@@ -238,7 +248,7 @@
 
     # Quasar
 
-        op sub diCopper bciCap%2 iCopper            #divisionItem
+        op sub diCopper bciCap%2 iCopper            #distributeItem
         op sub diLead bciCap%2 iLead
         op sub diTitanium bciCap%2 iTitanium
 
@@ -276,11 +286,11 @@
                 op max temp temp diScrap
                 jump calculate_t3 greaterThan temp 0
 
-                    set iiCopper 1          #inputItem
-                    set iiLead 1
-                    set iiCoal 1
-                    set iiSand 1
-                    set iiScrap 1
+                    set riCopper 1          #inputItem
+                    set riLead 1
+                    set riCoal 1
+                    set riSand 1
+                    set riScrap 1
                     set statusT3 usRally
                     jump skip_t3 always 0 0
 
@@ -293,6 +303,14 @@
         op max diCoal diCoal 0
         op max diSand diSand 0
         op max diScrap diScrap 0
+
+        #power vars with amplifier
+        op pow diCopper diCopper ampRes
+        op pow diLead diLead ampRes
+        op pow diTitanium diTitanium ampRes
+        op pow diCoal diCoal ampRes
+        op pow diSand diSand ampRes
+        op pow diScrap diScrap ampRes
 
         #multiply vars with ore priotize
         op mul diCopper diCopper pCopper
@@ -340,7 +358,7 @@
         # Based on hardness
         op min oiTitanium tuQuasar iiTitanium           #outputItem
         op sub tluQuasar tuQuasar oiTitanium
-        op min oiCoal tluQuasar iiCoal
+        op min oiCoal tluQuasar iiCoal          #totalLeftUnit
         op sub tluQuasar tluQuasar oiCoal
         op min oiCopper tluQuasar iiCopper
         op sub tluQuasar tluQuasar oiCopper
@@ -387,30 +405,24 @@
             op add oiTitanium oiTitanium tluQuasar
 
         quasar_out:
-        write oiCopper cell1 0
-        write oiLead cell1 1
-        write oiTitanium cell1 2
-        write oiCoal cell1 3
+        write oiTitanium cell1 0
+        write oiCoal cell1 1
+        write oiCopper cell1 2
+        write oiLead cell1 3
         write oiSand cell1 4
         write oiScrap cell1 5
 
     # Mega
 
-        #for a/b == Lim x=0 (x/x) == 1
-        op max iiCopper iiCopper 1e-10
-        op max iiLead iiLead 1e-10
-        op max iiTitanium iiTitanium 1e-10
-        op max iiCoal iiCoal 1e-10
-        op max iiSand iiSand 1e-10
-        op max iiScrap iiScrap 1e-10        
-        op max oiCopper oiCopper 1e-10
-        op max oiLead oiLead 1e-10
-        op max oiTitanium oiTitanium 1e-10
-        op max oiCoal oiCoal 1e-10
-        op max oiSand oiSand 1e-10
-        op max oiScrap oiScrap 1e-10
+        #for preventing divide-by-0
+        op max iiCopper iiCopper 1
+        op max iiLead iiLead 1
+        op max iiTitanium iiTitanium 1
+        op max iiCoal iiCoal 1
+        op max iiSand iiSand 1
+        op max iiScrap iiScrap 1        
 
-        #ore percentage of out/in
+        #ore ratio of out/in
         op div iiCopper oiCopper iiCopper
         op div iiLead oiLead iiLead
         op div iiTitanium oiTitanium iiTitanium
@@ -418,20 +430,27 @@
         op div iiSand oiSand iiSand
         op div iiScrap oiScrap iiScrap
 
-        #ore required to mine by percentage
-        op sub iiCopper 1 iiCopper
-        op sub iiLead 1 iiLead
-        op sub iiTitanium 1 iiTitanium
-        op sub iiCoal 1 iiCoal
-        op sub iiSand 1 iiSand
-        op sub iiScrap 1 iiScrap
+        #ore required to mine by ratio
+        op sub riCopper 1 iiCopper      #ratioItem
+        op sub riLead 1 iiLead
+        op sub riTitanium 1 iiTitanium
+        op sub riCoal 1 iiCoal
+        op sub riSand 1 iiSand
+        op sub riScrap 1 iiScrap
 
-        op mul iiCopper iiCopper diCopper
-        op mul iiLead iiLead diLead
-        op mul iiTitanium iiTitanium diTitanium
-        op mul iiCoal iiCoal diCoal
-        op mul iiSand iiSand diSand
-        op mul iiScrap iiScrap diScrap
+        op mul iiCopper riCopper diCopper
+        op mul iiLead riLead diLead
+        op mul iiTitanium riTitanium diTitanium
+        op mul iiCoal riCoal diCoal
+        op mul iiSand riSand diSand
+        op mul iiScrap riScrap diScrap
+
+        op pow iiCopper iiCopper ampRes
+        op pow iiLead iiLead ampRes
+        op pow iiTitanium iiTitanium ampRes
+        op pow iiCoal iiCoal ampRes
+        op pow iiSand iiSand ampRes
+        op pow iiScrap iiScrap ampRes
 
         op add drTotal iiCopper iiLead
         op add drTotal drTotal iiTitanium
@@ -513,27 +532,21 @@
             op add oiTitanium oiTitanium tluMega
 
         mega_out:
-        write oiCopper cell1 6
-        write oiLead cell1 7
-        write oiTitanium cell1 8
-        write oiCoal cell1 9
+        write oiTitanium cell1 6
+        write oiCoal cell1 7
+        write oiCopper cell1 8
+        write oiLead cell1 9
         write oiSand cell1 10
         write oiScrap cell1 11
     
     # pulsar
 
-        op max iiCopper iiCopper 1e-10
-        op max iiLead iiLead 1e-10
-        op max iiTitanium iiTitanium 1e-10
-        op max iiCoal iiCoal 1e-10
-        op max iiSand iiSand 1e-10
-        op max iiScrap iiScrap 1e-10        
-        op max oiCopper oiCopper 1e-10
-        op max oiLead oiLead 1e-10
-        op max oiTitanium oiTitanium 1e-10
-        op max oiCoal oiCoal 1e-10
-        op max oiSand oiSand 1e-10
-        op max oiScrap oiScrap 1e-10
+        op max iiCopper iiCopper 1
+        op max iiLead iiLead 1
+        op max iiTitanium iiTitanium 1
+        op max iiCoal iiCoal 1
+        op max iiSand iiSand 1
+        op max iiScrap iiScrap 1
 
         op div iiCopper oiCopper iiCopper
         op div iiLead oiLead iiLead
@@ -546,6 +559,13 @@
         op sub iiCoal 1 iiCoal
         op sub iiSand 1 iiSand
         op sub iiScrap 1 iiScrap
+
+        #multiply ratio with ratio before
+        op mul riCopper iiCopper riCopper
+        op mul riLead iiLead riLead
+        op mul riCoal iiCoal riCoal
+        op mul riSand iiSand riSand
+        op mul riScrap iiScrap riScrap
 
         skip_t3:
         set diCoal 0
@@ -580,10 +600,6 @@
                 op max temp temp diScrap
                 jump calculate_t2 greaterThan temp 0
 
-                    set iiCopper 1
-                    set iiLead 1
-                    set iiSand 1
-                    set iiScrap 1
                     set statusT2 usRally
                     jump skip_t2 always 0 0
 
@@ -596,17 +612,23 @@
         op max diSand diSand 0
         op max diScrap diScrap 0
 
+        op pow diCopper diCopper ampRes
+        op pow diLead diLead ampRes
+        op pow diCoal diCoal ampRes
+        op pow diSand diSand ampRes
+        op pow diScrap diScrap ampRes
+
         op mul diCopper diCopper pCopper
         op mul diLead diLead pLead
         op mul diCoal diCoal pCoal
         op mul diSand diSand pSand
         op mul diScrap diScrap pScrap
 
-        op mul diCopper diCopper iiCopper
-        op mul diLead diLead iiLead
-        op mul diCoal diCoal iiCoal
-        op mul diSand diSand iiSand
-        op mul diScrap diScrap iiScrap
+        op mul diCopper diCopper riCopper
+        op mul diLead diLead riLead
+        op mul diCoal diCoal riCoal
+        op mul diSand diSand riSand
+        op mul diScrap diScrap riScrap
 
         op add drTotal diCopper diLead
         op add drTotal drTotal diCoal
@@ -675,26 +697,20 @@
             op add oiCoal oiCoal tluPulsar
 
         pulsar_out:
-        write oiCopper cell1 12
-        write oiLead cell1 13
-        write oiCoal cell1 15
+        write 0 cell1 12
+        write oiCoal cell1 13
+        write oiCopper cell1 14
+        write oiLead cell1 15
         write oiSand cell1 16
         write oiScrap cell1 17
 
     # Poly
 
-        op max iiCopper iiCopper 1e-10
-        op max iiLead iiLead 1e-10
-        op max iiTitanium iiTitanium 1e-10
-        op max iiCoal iiCoal 1e-10
-        op max iiSand iiSand 1e-10
-        op max iiScrap iiScrap 1e-10        
-        op max oiCopper oiCopper 1e-10
-        op max oiLead oiLead 1e-10
-        op max oiTitanium oiTitanium 1e-10
-        op max oiCoal oiCoal 1e-10
-        op max oiSand oiSand 1e-10
-        op max oiScrap oiScrap 1e-10
+        op max iiCopper iiCopper 1
+        op max iiLead iiLead 1
+        op max iiCoal iiCoal 1
+        op max iiSand iiSand 1
+        op max iiScrap iiScrap 1
 
         op div iiCopper oiCopper iiCopper
         op div iiLead oiLead iiLead
@@ -708,11 +724,23 @@
         op sub iiSand 1 iiSand
         op sub iiScrap 1 iiScrap
 
-        op mul iiCopper iiCopper diCopper
-        op mul iiLead iiLead diLead
-        op mul iiCoal iiCoal diCoal
-        op mul iiSand iiSand diSand
-        op mul iiScrap iiScrap diScrap
+        op mul riCopper iiCopper riCopper
+        op mul riLead iiLead riLead
+        op mul riCoal iiCoal riCoal
+        op mul riSand iiSand riSand
+        op mul riScrap iiScrap riScrap
+
+        op mul iiCopper riCopper diCopper
+        op mul iiLead riLead diLead
+        op mul iiCoal riCoal diCoal
+        op mul iiSand riSand diSand
+        op mul iiScrap riScrap diScrap
+
+        op pow iiCopper iiCopper ampRes
+        op pow iiLead iiLead ampRes
+        op pow iiCoal iiCoal ampRes
+        op pow iiSand iiSand ampRes
+        op pow iiScrap iiScrap ampRes
 
         op add drTotal iiCopper iiLead
         op add drTotal drTotal iiCoal
@@ -781,26 +809,19 @@
             op add oiCoal oiCoal tluPoly
 
         poly_out:
-        write oiCopper cell1 18
-        write oiLead cell1 19
-        write oiCoal cell1 21
+        write 0 cell1 18
+        write oiCoal cell1 19
+        write oiCopper cell1 20
+        write oiLead cell1 21
         write oiSand cell1 22
         write oiScrap cell1 23
 
     # Mono
 
-        op max iiCopper iiCopper 1e-10
-        op max iiLead iiLead 1e-10
-        op max iiTitanium iiTitanium 1e-10
-        op max iiCoal iiCoal 1e-10
-        op max iiSand iiSand 1e-10
-        op max iiScrap iiScrap 1e-10        
-        op max oiCopper oiCopper 1e-10
-        op max oiLead oiLead 1e-10
-        op max oiTitanium oiTitanium 1e-10
-        op max oiCoal oiCoal 1e-10
-        op max oiSand oiSand 1e-10
-        op max oiScrap oiScrap 1e-10
+        op max iiCopper iiCopper 1
+        op max iiLead iiLead 1
+        op max iiSand iiSand 1
+        op max iiScrap iiScrap 1        
 
         op div iiCopper oiCopper iiCopper
         op div iiLead oiLead iiLead
@@ -811,6 +832,11 @@
         op sub iiLead 1 iiLead
         op sub iiSand 1 iiSand
         op sub iiScrap 1 iiScrap
+
+        op mul riCopper iiCopper riCopper
+        op mul riLead iiLead riLead
+        op mul riSand iiSand riSand
+        op mul riScrap iiScrap riScrap
 
         skip_t2:
         set diSand 0
@@ -851,15 +877,20 @@
         op max diSand diSand 0
         op max diScrap diScrap 0
 
+        op pow diCopper diCopper ampRes
+        op pow diLead diLead ampRes
+        op pow diSand diSand ampRes
+        op pow diScrap diScrap ampRes
+
         op mul diCopper diCopper pCopper
         op mul diLead diLead pLead
         op mul diSand diSand pSand
         op mul diScrap diScrap pScrap
 
-        op mul diCopper diCopper iiCopper
-        op mul diLead diLead iiLead
-        op mul diSand diSand iiSand
-        op mul diScrap diScrap iiScrap
+        op mul diCopper diCopper riCopper
+        op mul diLead diLead riLead
+        op mul diSand diSand riSand
+        op mul diScrap diScrap riScrap
 
         op add drTotal diCopper diLead
         op add drTotal drTotal diSand
@@ -915,8 +946,10 @@
             op add oiCopper oiCopper tluMono
 
         mono_out:
-        write oiCopper cell1 24
-        write oiLead cell1 25
+        write 0 cell1 24
+        write 0 cell1 25
+        write oiCopper cell1 26
+        write oiLead cell1 27
         write oiSand cell1 28
         write oiScrap cell1 29
 
@@ -924,26 +957,30 @@
 
 # enable units
 
+    #check if proocessor unit controlling died
     op land esuQuasar euQuasar processor1           #enableStatusUnit
     op land esuMega euMega processor2
     op land esuPulsar euPulsar processor3
     op land esuPoly euPoly processor4
     op land esuMono euMono processor5
 
+    #store bit unit switch and write into cell
     op shl buQuasar esuQuasar 0          #bitUnit
     op shl buMega esuMega 1
     op shl buPulsar esuPulsar 2
     op shl buPoly esuPoly 3
     op shl buMono esuMono 4
-
     op add bit buQuasar buMega
     op add bit bit buPulsar
     op add bit bit buPoly
     op add bit bit buMono
 
+    #check if processor unit counter died
     op mul bit bit processor6
+
     write bit cell1 63
 
+    #enable unit 
     op mul esuQuasar esuQuasar statusT3
     op mul esuMega esuMega statusT3
     op mul esuPulsar esuPulsar statusT2
@@ -957,7 +994,11 @@
 
     jump bsConfig_dist notEqual bsConfig @surge-alloy
 
-        print ">10s timeout unit controlling\nneed 60FPS for speed accuracy\nstatus  second/loop:\n"
+        print ">10s timeout unit controlling\nneed 60FPS for speed accuracy\ntotalUnits status  second/loop:\n\n"
+        read temp cell1 54
+        print temp
+        op add puTotal puTotal temp
+        print " "
         print esuQuasar
         print "  "
         read temp cell1 42
@@ -965,6 +1006,10 @@
         op div temp temp 1e3
         print temp
         print "\n"
+        read temp cell1 55
+        print temp
+        op add puTotal puTotal temp
+        print " "
         print esuMega
         print "  "
         read temp cell1 43
@@ -972,6 +1017,10 @@
         op div temp temp 1e3
         print temp
         print "\n"
+        read temp cell1 56
+        print temp
+        op add puTotal puTotal temp
+        print " "
         print esuPulsar
         print "  "
         read temp cell1 44
@@ -979,6 +1028,10 @@
         op div temp temp 1e3
         print temp
         print "\n"
+        read temp cell1 57
+        print temp
+        op add puTotal puTotal temp
+        print " "
         print esuPoly
         print "  "
         read temp cell1 45
@@ -986,13 +1039,19 @@
         op div temp temp 1e3
         print temp
         print "\n"
+        read temp cell1 58
+        print temp
+        op add puTotal puTotal temp
+        print " "
         print esuMono
         print "  "
         read temp cell1 46
         op idiv temp temp 1
         op div temp temp 1e3
         print temp
-        print "\n "
+        print "\n"
+        print puTotal
+        print "  "
         read temp cell1 47
         op idiv temp temp 1
         op div temp temp 1e3
@@ -1003,13 +1062,14 @@
         print temp
         print "\nrally: "
         print usRally
+        set puTotal 0
         jump print_flush always 0 0
 
     bsConfig_dist:
     jump bsConfig_perf notEqual bsConfig @phase-fabric
 
         #created by py script, welp much wasted ins for simplify
-        print "()\n"
+        print "()\n"
         read temp cell1 54
         print temp
         op add puTotal puTotal temp
