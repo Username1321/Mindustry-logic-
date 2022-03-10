@@ -3,19 +3,20 @@
     # Player Input vars
         print "                                                                \n                                                                \n                                                                \n                                                                "
         set maxValue 0x1000000000000
-        print "Statement type, true/false"
+        print "Switch unitType to mine, true/false or 1/0"
             set euQuasar true
             set euMega true
             set euPulsar true
             set euPoly true
             set euMono true
-        print "Priotize type, 0 to disable, set higher value for higher priotize resource to mine"
-            set pCopper 1
-            set pLead 1
-            set pTitanium 1
-            set pCoal 1
-            set pSand 1
-            set pScrap .25
+        print "Priotize oreType, set 0 to disable, higher value for higher priotize resource to mine"
+        print "Configure left side, right side is multiplied by ore hardness for balance mining"
+            op mul pCopper 1 1.3
+            op mul pLead 1 1.3
+            op mul pTitanium 1 1.9
+            op mul pCoal 1 1.5
+            op mul pSand 1 1
+            op mul pScrap .25 1
         print "Resources amplifier in power, for unit to mine more for lower res"
             set ampRes 1.5
         print "Core capacity item stored in %, unit will not mine if lower, listed in msg info"
@@ -23,32 +24,27 @@
             set minRes%1 33.33333333333333
             set minRes% 90
         print "Maximum value of minRes%, incase core capacity incredibly high"
+        print "Reminder for recovery resources incase emergency defense and recover base"
             set maxMinRes2 25000
             set maxMinRes1 33000
             set maxMinRes maxValue
-        print "Jump direction into processor controlling, Please ignore this"
-            set usRun 27
-            print "rally at: here, core, command-center"
+        print "Jump (@counter) direction into processor controlling"
+            set usRun 30
+            print "Rally at: here, core, command-center"
                 set hereRally 11
-                set bcuRally 10         #buildingCoreUnitRally
-                set bcCuRally 9         #BuildingCommand-centerUnitRally
+                set bcuRally 10         # buildingCoreUnitRally
+                set bcCuRally 9         # buildingCommand-centerUnitRally
         print "Default configuration"
-            set usRally bcCuRally           #unitStatusRally
+            set usRally bcuRally           # unitStatusRally
         print "End of player input vars"
         print "ABSOLUTELY no change stuff below, except you know what you doing"
         printflush message1
 
-    # convert vars
+    # Convert vars
 
         op div minRes%2 100 minRes%2
         op div minRes%1 100 minRes%1
         op div minRes% 100 minRes%
-
-        # more units to mine for higher ore hardness
-        op mul pCopper pCopper 1.3
-        op mul pLead pLead 1.3
-        op mul pTitanium pTitanium 1.9
-        op mul pCoal pCoal 1.5
 
         op add temp pCopper pLead
         op add temp temp pTitanium
@@ -61,53 +57,76 @@
         op div pCoal pCoal temp
         op div pSand pSand temp
         op div pScrap pScrap temp
+        return:
 
-# Checks and config various thing
+    # Debug
 
-    return:
-    sensor bsConfig sorter1 @config         #buildingSorterConfig
-    jump bsConfig_update notEqual bsConfig null
+        ## reminder some prints messages are read vars from memory cell instead existed vars
+        #sensor bsConfig sorter1 @config
+        #set bciCap%2 25
+        #set bciCap%1 50
+        #set bciCap% 75
+        #set iCopper 50
+        #set iLead 50
+        #set iTitanium 50
+        #set iCoal 50
+        #set iSand 50
+        #set iScrap 50
+        #set tuQuasar 50
+        #set tuMega 50
+        #set tuPulsar 50
+        #set tuPoly 50
+        #set tuMono 50
+        #op mul puPoly tuMono 1
+        #op add puPoly puPoly tuPoly
+        #op mul puPulsar puPoly 1
+        #op add puPulsar puPulsar tuPulsar
+        #op mul puMega puPulsar 1
+        #op add puMega puMega tuMega
+        #op mul puQuasar puMega 1
+        #op add puQuasar puQuasar tuQuasar
+        #jump distribute_units always 0 0
+
+
+
+# Checks and configs
+
+    sensor bsConfig sorter1 @config         # buildingSorterConfig
+    jump bsConfig_update notEqual bsConfig null            # buildinSorterLastConfig
 
         print "[slate]5 uType Miner \n[sky]By : Username#3530[][]\n[#ff]disabled[]\n\n :  disable\n  show \n  show each distribution\n  show pefo. and total dist.\n  rally on //release\n\nother configuration on "
-        write 0 cell1 48
-        write 0 cell1 49
-        write 0 cell1 50
-        write 0 cell1 51
-        write 0 cell1 52
-        write 0 cell1 53
-        jump print_flush always 0 0
+        jump off always 0 0
 
     bsConfig_update:
-    jump check_unit equal bsConfig bslConfig            #bsLastConfig
-    
+    jump check_unit equal bsConfig bslConfig            # bsLastConfig
+
         set bslConfig bsConfig
-        jump switch_factory notEqual bsConfig @silicon
+        jump print_messages notEqual bsConfig @silicon
 
             control config sorter1 @surge-alloy
             sensor bsConfig sorter1 @config
             jump usRally_core notEqual usRally 0
 
                 set usRally hereRally
-                jump switch_factory always 0 0
+                jump print_messages always 0 0
 
             usRally_core:
             jump usRally_commandCenter notEqual usRally hereRally
 
                 set usRally bcuRally
-                jump switch_factory always 0 0
+                jump print_messages always 0 0
 
             usRally_commandCenter:
             jump usRally_idle notEqual usRally bcuRally
 
                 set usRally bcCuRally
-                jump switch_factory always 0 0
+                jump print_messages always 0 0
 
             usRally_idle:
-            jump switch_factory notEqual usRally bcCuRally
+            jump print_messages notEqual usRally bcCuRally
 
                 set usRally 0
-
-        switch_factory:         #idk if i commit add it
+                jump print_messages always 0 0
 
     check_unit:
     sensor uDead @unit @dead
@@ -118,6 +137,8 @@
     jump check_uMono lessThan @time timeout
 
         print "[slate]5 uType Mine\n[sky]By : Username#3530[][]\n[#ff][] timeout trying to bind //\n\n :  disable\n  show \n  show each distribution\n  show pefo. and status\n  rally on //release\n\nother configuration on "
+        
+        off:
         write 0 cell1 48
         write 0 cell1 49
         write 0 cell1 50
@@ -149,14 +170,14 @@
         jump check_uMono greaterThanEq uCont 2
 
     check_bCore:
-    ucontrol flag 0         #because of unit idle(do nothing) once randomly flagged and unclearable, i decided to forceflag 0
+    ucontrol flag 0         # because of unit idle(do nothing) once randomly flagged and unclearable, i decided to forceflag 0
     sensor bcDead bCore @dead
     jump ores_vars strictEqual bcDead false
 
         ulocate building core false 0 0 0 0 bCore
         jump return always 0 0
 
-# If ore exist, use value of res at core, else set value into maxValue
+# Check ores
 
     ores_vars:
     jump t1 equal pCopper 0
@@ -217,10 +238,10 @@
     t11:
     set iScrap maxValue
 
-# Import vars from cell and calculate total units
+# Calculate units total
 
     bciCap_vars:
-    sensor bciCap bCore @itemCapacity           #buildingCoreItemCapacity
+    sensor bciCap bCore @itemCapacity           # buildingCoreItemCapacity
     op idiv bciCap%2 bciCap minRes%2
     op min bciCap%2 bciCap%2 maxMinRes2
     op idiv bciCap%1 bciCap minRes%1
@@ -228,14 +249,14 @@
     op idiv bciCap% bciCap minRes%
     op min bciCap% bciCap% maxMinRes
 
-    read tuQuasar cell1 54          #totalUnitQuasar
+    read tuQuasar cell1 54          # totalUnit
     read tuMega cell1 55
     read tuPulsar cell1 56
     read tuPoly cell1 57
     read tuMono cell1 58
 
-    #more units to mine for lower mining speed
-    op mul puPoly tuMono .7142857142857143      #priotizeUnit
+    # more units to mine for lower mining speed
+    op mul puPoly tuMono .7142857142857143      # priotizeUnit
     op add puPoly puPoly tuPoly
     op mul puPulsar puPoly .7
     op add puPulsar puPulsar tuPulsar
@@ -244,10 +265,11 @@
     op mul puQuasar puMega .6666666666666666
     op add puQuasar puQuasar tuQuasar
 
-# Distribute units order by ore amount and player input
+# Distribute units
 
     # Quasar
 
+        distribute_units:
         op sub diCopper bciCap%2 iCopper            #distributeItem
         op sub diLead bciCap%2 iLead
         op sub diTitanium bciCap%2 iTitanium
@@ -286,7 +308,7 @@
                 op max temp temp diScrap
                 jump calculate_t3 greaterThan temp 0
 
-                    set riCopper 1          #inputItem
+                    set riCopper 1          # ratioItem
                     set riLead 1
                     set riCoal 1
                     set riSand 1
@@ -326,7 +348,7 @@
         op add drTotal drTotal diCoal
         op add drTotal drTotal diSand
         op add drTotal drTotal diScrap
-        op div iiCopper diCopper drTotal
+        op div iiCopper diCopper drTotal            # inputItem
         op div iiLead diLead drTotal
         op div iiTitanium diTitanium drTotal
         op div iiCoal diCoal drTotal
@@ -356,9 +378,9 @@
         op floor iiScrap iiScrap 0
 
         # Based on hardness
-        op min oiTitanium tuQuasar iiTitanium           #outputItem
+        op min oiTitanium tuQuasar iiTitanium           # outputItem
         op sub tluQuasar tuQuasar oiTitanium
-        op min oiCoal tluQuasar iiCoal          #totalLeftUnit
+        op min oiCoal tluQuasar iiCoal          # totalLeftUnit
         op sub tluQuasar tluQuasar oiCoal
         op min oiCopper tluQuasar iiCopper
         op sub tluQuasar tluQuasar oiCopper
@@ -371,7 +393,7 @@
 
         jump quasar_out equal tluQuasar 0
 
-            # if tluQuasar > 0, add into one of resource to prevent chain bind
+            # if tlUnit > 0, add into one of resource to prevent chain bind
             jump t12 equal oiScrap 0
 
                 op add oiScrap oiScrap tluQuasar
@@ -430,27 +452,21 @@
         op div iiSand oiSand iiSand
         op div iiScrap oiScrap iiScrap
 
-        #ore required to mine by ratio
-        op sub riCopper 1 iiCopper      #ratioItem
+        #ore required to mine by ratioOre
+        op sub riCopper 1 iiCopper
         op sub riLead 1 iiLead
         op sub riTitanium 1 iiTitanium
         op sub riCoal 1 iiCoal
         op sub riSand 1 iiSand
         op sub riScrap 1 iiScrap
 
+        #multiply distributeOre with ratioOre
         op mul iiCopper riCopper diCopper
         op mul iiLead riLead diLead
         op mul iiTitanium riTitanium diTitanium
         op mul iiCoal riCoal diCoal
         op mul iiSand riSand diSand
         op mul iiScrap riScrap diScrap
-
-        op pow iiCopper iiCopper ampRes
-        op pow iiLead iiLead ampRes
-        op pow iiTitanium iiTitanium ampRes
-        op pow iiCoal iiCoal ampRes
-        op pow iiSand iiSand ampRes
-        op pow iiScrap iiScrap ampRes
 
         op add drTotal iiCopper iiLead
         op add drTotal drTotal iiTitanium
@@ -543,7 +559,6 @@
 
         op max iiCopper iiCopper 1
         op max iiLead iiLead 1
-        op max iiTitanium iiTitanium 1
         op max iiCoal iiCoal 1
         op max iiSand iiSand 1
         op max iiScrap iiScrap 1
@@ -697,7 +712,6 @@
             op add oiCoal oiCoal tluPulsar
 
         pulsar_out:
-        write 0 cell1 12
         write oiCoal cell1 13
         write oiCopper cell1 14
         write oiLead cell1 15
@@ -735,12 +749,6 @@
         op mul iiCoal riCoal diCoal
         op mul iiSand riSand diSand
         op mul iiScrap riScrap diScrap
-
-        op pow iiCopper iiCopper ampRes
-        op pow iiLead iiLead ampRes
-        op pow iiCoal iiCoal ampRes
-        op pow iiSand iiSand ampRes
-        op pow iiScrap iiScrap ampRes
 
         op add drTotal iiCopper iiLead
         op add drTotal drTotal iiCoal
@@ -809,7 +817,6 @@
             op add oiCoal oiCoal tluPoly
 
         poly_out:
-        write 0 cell1 18
         write oiCoal cell1 19
         write oiCopper cell1 20
         write oiLead cell1 21
@@ -946,8 +953,6 @@
             op add oiCopper oiCopper tluMono
 
         mono_out:
-        write 0 cell1 24
-        write 0 cell1 25
         write oiCopper cell1 26
         write oiLead cell1 27
         write oiSand cell1 28
@@ -955,17 +960,17 @@
 
     skip_t1:
 
-# enable units
+# Give orders to units
 
     #check if proocessor unit controlling died
-    op land esuQuasar euQuasar processor1           #enableStatusUnit
+    op land esuQuasar euQuasar processor1           # enableStatusUnit
     op land esuMega euMega processor2
     op land esuPulsar euPulsar processor3
     op land esuPoly euPoly processor4
     op land esuMono euMono processor5
 
     #store bit unit switch and write into cell
-    op shl buQuasar esuQuasar 0          #bitUnit
+    op shl buQuasar esuQuasar 0          # bitUnit
     op shl buMega esuMega 1
     op shl buPulsar esuPulsar 2
     op shl buPoly esuPoly 3
@@ -992,6 +997,9 @@
     write esuPoly cell1 51
     write esuMono cell1 52
 
+# Print messages
+
+    print_messages:
     jump bsConfig_dist notEqual bsConfig @surge-alloy
 
         print ">10s timeout unit controlling\nneed 60FPS for speed accuracy\ntotalUnits status  second/loop:\n\n"
@@ -1008,7 +1016,7 @@
         print "\n"
         read temp cell1 55
         print temp
-        op add puTotal puTotal temp
+        op add puTotal 0 temp
         print " "
         print esuMega
         print "  "
@@ -1062,41 +1070,39 @@
         print temp
         print "\nrally: "
         print usRally
-        set puTotal 0
         jump print_flush always 0 0
 
     bsConfig_dist:
     jump bsConfig_perf notEqual bsConfig @phase-fabric
 
-        #created by py script, welp much wasted ins for simplify
         print "()\n"
         read temp cell1 54
         print temp
-        op add puTotal puTotal temp
+        op add puTotal 0 temp
         print " "
         read temp cell1 0
         print temp
-        op add ore ore temp
+        op add ore 0 temp
         print " "
         read temp cell1 1
         print temp
-        op add ore1 ore1 temp
+        op add ore1 0 temp
         print " "
         read temp cell1 2
         print temp
-        op add ore2 ore2 temp
+        op add ore2 0 temp
         print " "
         read temp cell1 3
         print temp
-        op add ore3 ore3 temp
+        op add ore3 0 temp
         print " "
         read temp cell1 4
         print temp
-        op add ore4 ore4 temp
+        op add ore4 0 temp
         print " "
         read temp cell1 5
         print temp
-        op add ore5 ore5 temp
+        op add ore5 0 temp
         print "\n"
         read temp cell1 55
         print temp
@@ -1129,11 +1135,7 @@
         read temp cell1 56
         print temp
         op add puTotal puTotal temp
-        print " "
-        read temp cell1 12
-        print temp
-        op add ore ore temp
-        print " "
+        print " 0 "
         read temp cell1 13
         print temp
         op add ore1 ore1 temp
@@ -1157,11 +1159,7 @@
         read temp cell1 57
         print temp
         op add puTotal puTotal temp
-        print " "
-        read temp cell1 18
-        print temp
-        op add ore ore temp
-        print " "
+        print " 0 "
         read temp cell1 19
         print temp
         op add ore1 ore1 temp
@@ -1185,15 +1183,7 @@
         read temp cell1 58
         print temp
         op add puTotal puTotal temp
-        print " "
-        read temp cell1 24
-        print temp
-        op add ore ore temp
-        print " "
-        read temp cell1 25
-        print temp
-        op add ore1 ore1 temp
-        print " "
+        print " 0 0 "
         read temp cell1 26
         print temp
         op add ore2 ore2 temp
@@ -1224,13 +1214,6 @@
         print " "
         print ore5
         print " "
-        set puTotal 0
-        set ore 0
-        set ore1 0
-        set ore2 0
-        set ore3 0
-        set ore4 0
-        set ore5 0
         jump print_flush always 0 0
 
     bsConfig_perf:
@@ -1239,25 +1222,29 @@
         control config sorter1 @plastanium
 
     bsConfig_plastanium:
-    op mod time @time 15e3
-    jump info greaterThan time 5e3
+    sensor tScale @this @timescale
+    op div tScale 1 tScale
+    op add counter counter tScale
+    op mod counter counter 3
+    jump info greaterThanEq counter 1
 
         print "[slate]5 uType Miner \n[sky]By : Username#3530[][]\n\n :  disable\n  show \n  show each distribution\n  show pefo. and status\n  rally on //release\n\nother configuration on "
         jump print_flush always 0 0 
 
     info:
-    jump info2 greaterThan time 1e4
+    jump info2 greaterThanEq counter 2
     
-        print "[sky]Made by Username\nHelped by Zxtej and SBytes[]\n\nPriority:\n   >%mr2  >%mr1 \n  ㅤ >%mr2  >%mr1 \nㅤ  ㅤ >%mr2 ㅤ >%mr1 "
+        print "[slate]5 uType Miner \n[sky]Made by Username#3530\nHelped by : Zxtej and SBytes[][]\n\nPriority table, will not mine the ore if below of minres:\n   >%mr2  >%mr1 \n  ㅤ >%mr2  >%mr1 \nㅤ  ㅤ >%mr2 ㅤ >%mr1 "
         jump print_flush always 0 0 
 
     info2:
-    print "v6.0 experimental DONT COPY\n\n> Better Message UI\n> added proc speed indicator\n> dump item if core full\n> more evenly distribute\n\n- slower proc reaction\n- may buggy"
+    print "v6.0 experimental DONT COPY\n\n> better message UI\n> added proc speed indicator\n> dump item if core full\n> evenly distribute\n> more configuration\n> changeable rally loc\n> more\n\n- slower main data processing\n- may buggy"
 
     print_flush:
     printflush message1
     op sub dTime @time ltime
     set ltime @time
     jump return always 0 0
-    set "Logic_for_5_utype_miner_by:" "Username#3530"
-    set "Logic_for_5_utype_miner_by:" "Zxtej"
+    print "Logic 5 uType Miner made by: Username, Zxtej, sBytes"
+
+# End
