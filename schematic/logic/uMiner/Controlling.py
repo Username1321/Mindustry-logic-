@@ -1,17 +1,14 @@
 p, a = ("quasar", "mega", "pulsar", "poly", "mono"), ""
 for i in range(len(p)):
-    a = a + f'''#{p[i]}
-        #keep to mind that this has variation for different unit for faster logic
-    #keep to mind that this has variation for different unit for faster logic
-    #list: qumepupomo:
-
+    a = a + f'''# {p[i]}
+    
     #Bind unflagged unit
 
         return:
         ubind @{p[i]}
         sensor uFlag @unit @flag
         jump return notEqual uFlag 0
-        read @counter cell {48+i}          #unit switch cell location: 48, 49, ...
+        read @counter cell {i+48}
 
     #initialize
 
@@ -24,24 +21,28 @@ for i in range(len(p)):
 
     #unit rally/release
 
-        #perhap may add much various thing here eg. unit controlling, rally at this processor, etc.
-
         ulocate building rally false @copper bcCX bcCY bcCFound bcCenter            #buildingCommand-center
         ulocate building core false @copper bcX bcY 0 bCore         #buildingCore
-        sensor uiTotal @unit @totalItems        #unitItemTotal
-        jump uStatus_rally equal uiTotal 0
+        sensor uiType @unit @firstItem
+        jump uStatus_rally equal uiType null
 
-            ucontrol stop 0 0 0 0 0 0
+            sensor bciTotal bCore uiType            #dump item if buildingCoreItemTotal reached buildingcoreItemCapacity
+            jump dump_item lessThan bciTotal bciCap
+
+                set bCore @air
+
+            dump_item:
             ucontrol itemDrop bCore 999 0 0
+            ucontrol stop 0 0 0 0 0 0
             ucontrol approach bcX bcY 5 0 0
             end
 
         uStatus_rally:
         #read the location jump, check if direction goes to ulocate core or else
-        read uStatus cell1 {48+i}           #uStatus cell location +48
+        read uStatus cell1 {i+48}
         jump bcC_rally notEqual uStatus 11
 
-            ucontrol approach @thisx @thisy {12-(i*2)} 0 0
+            ucontrol approach @thisx @thisy {12-(i*2)} 0 0          #rally range
             end
 
         bcC_rally:
@@ -49,11 +50,11 @@ for i in range(len(p)):
 
             jump bc_rally notEqual uStatus 9
 
-                ucontrol approach bcCX bcCY {12-(i*2)} 0 0          #rally range 12 10 8 6 4;
+                ucontrol approach bcCX bcCY {12-(i*2)} 0 0
                 end
             
         bc_rally:
-        ucontrol approach bcX bcY {12-(i*2)} 0 0            #rally range 12 10 8 6 4;
+        ucontrol approach bcX bcY {12-(i*2)} 0 0
         end
 
     #unit mining controlling
@@ -66,24 +67,24 @@ for i in range(len(p)):
             op add @counter counter @counter
 
                 set iMine @titanium
-                read limit cell1 {6*i}          #read ore cell location 0-5, 6-11, ...
-                jump counter_add always 0 0
+                read limit cell1 {6*i}
+                jump counter_add always
 
                 set iMine @coal
                 read limit cell1 {6*i+1}
-                jump counter_add always 0 0
+                jump counter_add always
 
                 set iMine @copper
                 read limit cell1 {6*i+2}
-                jump counter_add always 0 0
+                jump counter_add always
 
                 set iMine @lead
                 read limit cell1 {6*i+3}
-                jump counter_add always 0 0
+                jump counter_add always
 
                 set iMine @sand
                 read limit cell1 {6*i+4}
-                jump counter_add always 0 0
+                jump counter_add always
 
                 set iMine @scrap
                 read limit cell1 {6*i+5}
@@ -91,7 +92,7 @@ for i in range(len(p)):
                 sensor bciCap bCore @itemCapacity
                 op sub dTime @time lTime
                 set lTime @time
-                write dTime cell1 {42+i}            #write deltaTime cell location 42, 43, ...
+                write dTime cell1 {i+42}
 
             counter_add:
             op add counter counter 3
@@ -99,11 +100,11 @@ for i in range(len(p)):
 
         uCounter_add:
         op add uCounter uCounter 1
-        ulocate ore core false iMine oX oY 0 0
         ulocate building core false 0 bcX bcY 0 bCore
         ucontrol within bcX bcY 26.5 bccDrop 0          #if unit near core, for auto drop
         jump bccDrop_false equal bccDrop false
 
+            ulocate ore core false iMine oX oY 0 0
             ucontrol mine oX oY 0 0 0
             ucontrol itemDrop bCore 999 0 0 0
             sensor uMining @unit @mining
@@ -116,18 +117,17 @@ for i in range(len(p)):
                     jump approach_bCore lessThan bciTotal bciCap
 
                         ucontrol itemDrop @air 999 0 0 0
-                        jump approach_bCore always 0 0
+                        jump mine_ore always
 
         bccDrop_false:
-        sensor uMining @unit @mining
-        jump check_item equal uMining false
+        sensor oX @unit @mineX
+        jump check_item lessThan oX 0           # aswell check if unit mining
 
-            sensor oX @unit @mineX
             sensor oY @unit @mineY
-            op min vOre oX oY           #for prevent if vars given -1, 0, or unit not mining
-            jump approach_ore greaterThanEq vOre 0
+            jump approach_ore greaterThanEq oY 0
 
         check_item:
+        ulocate ore core false iMine oX oY 0 0
         sensor uimTotal @unit iMine         #unitItemMineTotal
         sensor uiTotal @unit @totalItems            #unitItemTotal
         jump approach_bCore notEqual uimTotal uiTotal
@@ -138,7 +138,7 @@ for i in range(len(p)):
         ucontrol approach bcX bcY 5 0 0
         end
         
-        set "Logic_for_5_utype_miner_by:" "Username#3530"
+        print "Logic 5 uType uMiner made by: Username"
 
         mine_ore:
         ucontrol mine oX oY 0 0 0
@@ -146,5 +146,5 @@ for i in range(len(p)):
         approach_ore:
         ucontrol approach oX oY 2 0 0
 '''
-a = a+"h"
+a = "# Keep to mind that this has variation for different unit for faster logic\n"+a+"# End"
 open('Temp\output.mlog', 'w').write(a)

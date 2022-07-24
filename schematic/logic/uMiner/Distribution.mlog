@@ -2,142 +2,315 @@
 
     # Player Input vars
         print "                                                                \n                                                                \n                                                                \n                                                                "
-        set maxValue 0x1000000000000
-        print "Switch unitType to mine, true/false or 1/0"
-            set euQuasar true
-            set euMega true
-            set euPulsar true
-            set euPoly true
-            set euMono true
-        print "Priotize oreType, set 0 to disable, higher value for higher priotize resource to mine"
-        print "Configure left side, right side is multiplied by ore hardness for balance mining"
-            op mul pCopper 1 1.3
-            op mul pLead 1 1.3
-            op mul pTitanium 1 1.9
-            op mul pCoal 1 1.5
-            op mul pSand 1 1
-            op mul pScrap .25 1
-        print "Resources amplifier in power, for unit to mine more for lower res"
-            set ampRes 1.5
-        print "Core capacity item stored in %, unit will not mine if lower, listed in msg info"
-            set minRes%2 25
-            set minRes%1 33.33333333333333
-            set minRes% 90
-        print "Maximum value of minRes%, incase core capacity incredibly high"
-        print "Reminder for recovery resources incase emergency defense and recover base"
-            set maxMinRes2 25000
-            set maxMinRes1 33000
-            set maxMinRes maxValue
-        print "Jump (@counter) direction into processor controlling"
-            set usRun 30
-            print "Rally at: here, core, command-center"
-                set hereRally 11
-                set bcuRally 10         # buildingCoreUnitRally
-                set bcCuRally 9         # buildingCommand-centerUnitRally
-        print "Default configuration"
-            set usRally bcuRally           # unitStatusRally
-        print "End of player input vars"
-        print "ABSOLUTELY no change stuff below, except you know what you doing"
+        print "READ: DONT ABUSE OR GRIEF ON EVERYTHING HERE"
+        set defMaxVal 0x1000000000000
+        print "Cop(per) Lea(d) Tit(anium) Coa(l) San(d) Scr(ap), Qua(sar) Meg(a) Pul(sar) Pol(y) Mon(o)"
+        print "Unit type switch in boolean(true/1 and false/0)."
+            set defSwiUQua true
+            set defSwiUMeg true
+            set defSwiUPul true
+            set defSwiUPol true
+            set defSwiUMon true
+
+        print "Priotize item type to mine, set false/0 to disable OR float(1.0) to priotize more"
+        print "Configure right side, left side is default ore hardness multiplier. 1.3; 1.3; 1.9; 1.5; 1; 1"
+            op mul defPriICop 1.3 1
+            op mul defPriILea 1.3 1
+            op mul defPriITit 1.9 1
+            op mul defPriICoa 1.5 1
+            op mul defPriISan 1 1
+            op mul defPriIScr 1 .125
+
+        print "Item amplifier in float power(^), lower stored item will priotize more. 2; 2; 2; 2; 2; 2"
+            set defAmpICop 2
+            set defAmpILea 2
+            set defAmpITit 2
+            set defAmpICoa 2
+            set defAmpISan 2
+            set defAmpIScr 1
+
+        print "Switch between capacity based on item's minimum capacity OR item's maximum capacity in boolean"
+            set defBaseICap true
+
+        print "Items minimum and maximum of building core capacity in float percentage(%)"
+            print "IF other item reached item's minimum capacity DO unit start mine the item. 0; 0; 0; 25; 25; 33"
+                op div defICopMin% 100 0          
+                op div defILeaMin% 100 0
+                op div defITitMin% 100 0
+                op div defICoaMin% 100 25
+                op div defISanMin% 100 25
+                op div defIScrMin% 100 33
+
+            print "IF item reached item's maximum capacity DO unit stop mine the item. 95; 95; 95; 95; 95; 95"
+                op div defICopMax% 100 95
+                op div defILeaMax% 100 95
+                op div defITitMax% 100 95
+                op div defICoaMax% 100 95
+                op div defISanMax% 100 95
+                op div defIScrMax% 100 95
+
+        print "Items minimum and capacity of building core aswell to limit percentage in interger(1)"
+        print "Reminder for recovery resources incase emergency defense and base recovery"
+        print "0; 0; 0; 25000; 25000; 33000  ;  defMaxVal "
+                set defICopMin 0
+                set defILeaMin 0
+                set defITitMin 0
+                set defICoaMin 25000
+                set defISanMin 25000
+                set defIScrMin 33000
+
+                set defICopMax defMaxVal
+                set defILeaMax defMaxVal
+                set defITitMax defMaxVal
+                set defICoaMax defMaxVal
+                set defISanMax defMaxVal
+                set defIScrMax defMaxVal
+
+        print "Jump (@counter) direction into processor controlling in interger"
+
+            print "Default unit ally at: here; core; command-center. 11; 10; 9"
+                set defRalHere 11
+                set defRalBCore 10
+                set defRalBCent 9
+
+            print "Default unit DO mining, set 0 to release unit freely. 30"
+                set defUnitStatRun 30
+
+            print "Default unit location DO rally, set 0 to release unit freely. 4"
+            print "2 here; 4 core; 6 command-center; 0 release"
+                set defStaRalArr 4
+
+
+        print "require to look code at calculate unit part, priotize unitType"
+            set defPriUPol .7142857142857143
+            set defPriUPul .7
+            set defPriUMeg 1.25
+            set defPriUQua .6666666666666666
+
+        print "End of player input vars, READ: DON'T DELIBERATE CHANGE STUFF BELOW UNLESS YOU KNOW WHAT TO DO"
         printflush message1
 
     # Convert vars
 
-        op div minRes%2 100 minRes%2
-        op div minRes%1 100 minRes%1
-        op div minRes% 100 minRes%
-
-        op add temp pCopper pLead
-        op add temp temp pTitanium
-        op add temp temp pCoal
-        op add temp temp pSand
-        op add temp temp pScrap
-        op div pCopper pCopper temp
-        op div pLead pLead temp
-        op div pTitanium pTitanium temp
-        op div pCoal pCoal temp
-        op div pSand pSand temp
-        op div pScrap pScrap temp
+        # distribute ratio evenly
+        op add tmp defPriICop defPriILea
+        op add tmp tmp defPriITit
+        op add tmp tmp defPriICoa
+        op add tmp tmp defPriISan
+        op add tmp tmp defPriIScr
+        op div defPriICop defPriICop tmp
+        op div defPriILea defPriILea tmp
+        op div defPriITit defPriITit tmp
+        op div defPriICoa defPriICoa tmp
+        op div defPriISan defPriISan tmp
+        op div defPriIScr defPriIScr tmp
         return:
 
     # Debug
 
-        ## reminder some prints messages are read vars from memory cell instead existed vars
-        #sensor bsConfig sorter1 @config
-        #set bciCap%2 25
-        #set bciCap%1 50
-        #set bciCap% 75
-        #set iCopper 50
-        #set iLead 50
-        #set iTitanium 50
-        #set iCoal 50
-        #set iSand 50
-        #set iScrap 50
-        #set tuQuasar 50
-        #set tuMega 50
-        #set tuPulsar 50
-        #set tuPoly 50
-        #set tuMono 50
-        #op mul puPoly tuMono 1
-        #op add puPoly puPoly tuPoly
-        #op mul puPulsar puPoly 1
-        #op add puPulsar puPulsar tuPulsar
-        #op mul puMega puPulsar 1
-        #op add puMega puMega tuMega
-        #op mul puQuasar puMega 1
-        #op add puQuasar puQuasar tuQuasar
-        #jump distribute_units always 0 0
-
-
+        #sensor bSortConf sorter1 @config
+        #set iCop 50
+        #set iLea 50
+        #set iTit 50
+        #set iCoa 50
+        #set iSan 50
+        #set iScr 50
+        #set uQuaTot 50
+        #set uMegTot 50
+        #set uPulTot 50
+        #set uPolTot 50
+        #set uMonTot 50
+        #op mul priUPol uMonTot 1
+        #op add priUPol priUPol uPolTot
+        #op mul priUPul priUPol 1
+        #op add priUPul priUPul uPulTot
+        #op mul priUMeg priUPul 1
+        #op add priUMeg priUMeg uMegTot
+        #op mul priUQua priUMeg 1
+        #op add priUQua priUQua uQuaTot
+        #jump distribute_units always
 
 # Checks and configs
 
-    sensor bsConfig sorter1 @config         # buildingSorterConfig
-    jump bsConfig_update notEqual bsConfig null            # buildinSorterLastConfig
+    sensor bSortConf sorter1 @config
+    jump bSortConf_update notEqual bSortConf null
 
-        print "[slate]5 uType Miner \n[sky]By : Username#3530[][]\n[#ff]disabled[]\n\n :  disable\n  show \n  show each distribution\n  show pefo. and total dist.\n  rally on //release\n\nother configuration on "
-        jump off always 0 0
+        print "[sky]5 uType uMiner\n[slate]by [#ff7]Username#3530[][]\n[#ff]disabled[]\n\n :  disable\n  show \n  show each distribution\n  show pefo. and total dist.\n  show res. distribution\n  rally on //release\n\nother configuration on "
+        jump off always
 
-    bsConfig_update:
-    jump check_unit equal bsConfig bslConfig            # bsLastConfig
+    bSortConf_update:
+    jump check_unit equal bSortConf bSortConfLast
 
-        set bslConfig bsConfig
-        jump print_messages notEqual bsConfig @silicon
+        set bSortConfLast bSortConf
+        jump bSortConf_sili notEqual bSortConf @silicon
 
             control config sorter1 @surge-alloy
-            sensor bsConfig sorter1 @config
-            jump usRally_core notEqual usRally 0
+            set bSortConf @surge-alloy   
+            op add defStaRalArr defStaRalArr 2
 
-                set usRally hereRally
-                jump print_messages always 0 0
+        bSortConf_sili:
+        op mod defStaRalArr defStaRalArr 8
+        op add @counter defStaRalArr @counter
 
-            usRally_core:
-            jump usRally_commandCenter notEqual usRally hereRally
+            set defStaRally 0
+            jump bSortConf_else always
 
-                set usRally bcuRally
-                jump print_messages always 0 0
+            set defStaRally defRalHere
+            jump bSortConf_else always
 
-            usRally_commandCenter:
-            jump usRally_idle notEqual usRally bcuRally
+            set defStaRally defRalBCore
+            jump bSortConf_else always
 
-                set usRally bcCuRally
-                jump print_messages always 0 0
+            set defStaRally defRalBCent
+            jump bSortConf_else always
 
-            usRally_idle:
-            jump print_messages notEqual usRally bcCuRally
-
-                set usRally 0
-                jump print_messages always 0 0
+        bSortConf_else:
+        jump print_messages equal bSortConf @surge-alloy
+        jump print_messages equal bSortConf @phase-fabric
+        jump print_messages equal bSortConf @thorium
+        set bSortConfLast @plastanium
+        control config sorter1 @plastanium
+        jump print_messages always
 
     check_unit:
     sensor uDead @unit @dead
     jump check_ubCont equal uDead false
-    op add timeout @time 1e4
 
-    check_timeout:
-    jump check_uMono lessThan @time timeout
+        op add timeout @time 1e4
 
-        print "[slate]5 uType Mine\n[sky]By : Username#3530[][]\n[#ff][] timeout trying to bind //\n\n :  disable\n  show \n  show each distribution\n  show pefo. and status\n  rally on //release\n\nother configuration on "
+        check_timeout:
+        jump check_UMon lessThan @time timeout
+
+            print "[sky]5 uType uMiner\n[slate]by [#ff7]Username#3530[][]\n[#ff][] timeout trying to bind //\n\n :  disable\n  show \n  show each distribution\n  show pefo. and status\n  show res. distribution\n  rally on //release\n\nother configuration on "
+            jump off always
+
+        check_UMon:
+        ubind @mono
+        sensor tmp @unit @controlled
+        jump check_bCore lessThan tmp 2
+
+        ubind @poly
+        sensor tmp @unit @controlled      
+        jump check_bCore lessThan tmp 2
+
+        ubind @mega
+
+    check_ubCont:
+    sensor tmp @unit @controlled                
+    jump check_timeout greaterThanEq tmp 2
+
+    check_bCore:
+    ucontrol flag 0         # because of unit idle(do nothing) once randomly flagged and unclearable by deflagger, i decided to forceflag 0
+    sensor tmp bCore @dead
+    jump ores_vars strictEqual tmp false
+
+        ulocate building core false 0 0 0 0 bCore
+        jump return always
+
+# Check, calculates items
+
+    ores_vars:
+    sensor iCap bCore @itemCapacity
+    jump ore_find equal iCap iCapLast
+
+    set iCapLast iCap
+
+    # multiply iCap with percentage
+    op idiv iCopMin iCap defICopMin%
+    op idiv iLeaMin iCap defILeaMin% 
+    op idiv iSanMin iCap defISanMin% 
+    op idiv iScrMin iCap defIScrMin% 
+    op idiv iCoaMin iCap defICoaMin% 
+    op idiv iTitMin iCap defITitMin% 
+
+    # limit the iCap in percentage and int
+    op min iCopMin iCopMin defICopMin
+    op min iLeaMin iLeaMin defILeaMin
+    op min iSanMin iSanMin defISanMin
+    op min iScrMin iScrMin defIScrMin
+    op min iCoaMin iCoaMin defICoaMin
+    op min iTitMin iTitMin defITitMin
+
+    op idiv iCopMax iCap defICopMax%
+    op idiv iLeaMax iCap defILeaMax% 
+    op idiv iSanMax iCap defISanMax% 
+    op idiv iScrMax iCap defIScrMax% 
+    op idiv iCoaMax iCap defICoaMax% 
+    op idiv iTitMax iCap defITitMax% 
+
+    op min iCopMax iCopMax defICopMax
+    op min iLeaMax iLeaMax defILeaMax
+    op min iSanMax iSanMax defISanMax
+    op min iScrMax iScrMax defIScrMax
+    op min iCoaMax iCoaMax defICoaMax
+    op min iTitMax iTitMax defITitMax
+
+    ore_find:
+    set iStoMinT1 defMaxVal
+    set iCop defMaxVal
+    # check if priorityItem false/0 or disabled
+    jump skip_iCop equal defPriICop 0
+
+        # check if itemOre exist
+        ulocate ore core 0 @copper 0 0 tmp 0
+        jump skip_iCop equal tmp false
+
+            # check if item greater than iTypeMin, if true set iStoredMinTier = iCop
+            sensor iCop bCore @copper
+
+    skip_iCop:
+    set iLea defMaxVal
+    jump skip_iLea equal defPriILea 0
+
+        ulocate ore core 0 @lead 0 0 tmp 0
+        jump skip_iLea equal tmp false
+
+            sensor iLea bCore @lead
+
+    skip_iLea:
+    set iSan defMaxVal
+    jump skip_iSan equal defPriISan
+
+        ulocate ore core 0 @sand 0 0 tmp 0
+        jump skip_iSan equal tmp false
+
+            sensor iSan bCore @sand
+
+    skip_iSan:
+    set iScr defMaxVal
+    jump skip_iScr equal defPriIScr 0
+
+        ulocate ore core 0 @scrap 0 0 tmp 0
+        jump skip_iScr equal tmp false
         
+            sensor iScr bCore @scrap
+
+    skip_iScr:    
+    set iCoa defMaxVal
+    jump skip_iCoa equal defPriICoa 0
+
+        ulocate ore core 0 @coal 0 0 tmp 0
+        jump skip_iCoa equal tmp false
+        
+            sensor iCoa bCore @coal
+
+    skip_iCoa:
+    set iTit defMaxVal
+    jump skip_iTit equal defPriITit 0
+
+        ulocate ore core 0 @titanium 0 0 tmp 0
+        jump skip_iTit equal tmp false
+        
+            sensor iTit bCore @titanium
+
+    skip_iTit:
+
+# Calculate units total
+
+    # check if uCounter processor die
+    jump iCap_vars notEqual processor6 null
+
+        print "[sky]5 uType uMiner\n[slate]by [#ff7]Username#3530[][]\n[#ff] [] uCounter or broken link\n\n :  disable\n  show \n  show each distribution\n  show pefo. and status\n  show res. distribution\n  rally on //release\n\nother configuration on "
         off:
         write 0 cell1 48
         write 0 cell1 49
@@ -145,1067 +318,720 @@
         write 0 cell1 51
         write 0 cell1 52
         write 0 cell1 53
-        jump print_flush always 0 0
+        write 0 cell1 63
+        jump print_flush always
 
-    check_uMono:
-    ubind @mono
-    jump check_uPoly strictEqual @unit null
+    iCap_vars:
 
-        sensor uCont @unit @controlled
-        jump check_bCore lessThan uCont 2
+    #check if processor unit controlling died
+    op land swiUQua defSwiUQua processor1
+    op land swiUMeg defSwiUMeg processor2
+    op land swiUPul defSwiUPul processor3
+    op land swiUPol defSwiUPol processor4
+    op land swiUMon defSwiUMon processor5
 
-    check_uPoly:
-    ubind @poly
-    jump check_uMega strictEqual @unit null
+    read uQuaTot cell1 54
+    read uMegTot cell1 55
+    read uPulTot cell1 56
+    read uPolTot cell1 57
+    read uMonTot cell1 58    
 
-        sensor uCont @unit @controlled      
-        jump check_bCore lessThan uCont 2
-
-    check_uMega:
-    ubind @mega
-    jump check_timeout strictEqual @unit null
-
-        check_ubCont:
-        sensor uCont @unit @controlled                
-        jump check_uMono greaterThanEq uCont 2
-
-    check_bCore:
-    ucontrol flag 0         # because of unit idle(do nothing) once randomly flagged and unclearable, i decided to forceflag 0
-    sensor bcDead bCore @dead
-    jump ores_vars strictEqual bcDead false
-
-        ulocate building core false 0 0 0 0 bCore
-        jump return always 0 0
-
-# Check ores
-
-    ores_vars:
-    jump t1 equal pCopper 0
-
-        ulocate ore core 0 @copper 0 0 temp 0
-        sensor iCopper bCore @copper
-        jump t2 equal temp true
-
-    t1:
-    set iCopper maxValue
-
-    t2:
-    jump t3 equal pLead 0
-
-        ulocate ore core 0 @lead 0 0 temp 0
-        sensor iLead bCore @lead
-        jump t4 equal temp true
-
-    t3:
-    set iLead maxValue
-
-    t4:
-    jump t5 equal pTitanium 0
-
-        ulocate ore core 0 @titanium 0 0 temp 0
-        sensor iTitanium bCore @titanium
-        jump t6 equal temp true
-
-    t5:
-    set iTitanium maxValue
-
-    t6:
-    jump t7 equal pCoal 0
-
-        ulocate ore core 0 @coal 0 0 temp 0
-        sensor iCoal bCore @coal
-        jump t8 equal temp true
-
-    t7:
-    set iCoal maxValue
-
-    t8:
-    jump t9 equal pSand
-        ulocate ore core 0 @sand 0 0 temp 0
-        sensor iSand bCore @sand
-        jump t10 equal temp true
-
-    t9:
-    set iSand maxValue
-
-    t10:
-    jump t11 equal pScrap 0
-
-        ulocate ore core 0 @scrap 0 0 temp 0
-        sensor iScrap bCore @scrap
-        jump bciCap_vars equal temp true
-
-    t11:
-    set iScrap maxValue
-
-# Calculate units total
-
-    bciCap_vars:
-    sensor bciCap bCore @itemCapacity           # buildingCoreItemCapacity
-    op idiv bciCap%2 bciCap minRes%2
-    op min bciCap%2 bciCap%2 maxMinRes2
-    op idiv bciCap%1 bciCap minRes%1
-    op min bciCap%1 bciCap%1 maxMinRes1
-    op idiv bciCap% bciCap minRes%
-    op min bciCap% bciCap% maxMinRes
-
-    read tuQuasar cell1 54          # totalUnit
-    read tuMega cell1 55
-    read tuPulsar cell1 56
-    read tuPoly cell1 57
-    read tuMono cell1 58
+    # disable if processor unit controlling died
+    op mul uQuaTot uQuaTot swiUQua
+    op mul uMegTot uMegTot swiUMeg
+    op mul uPulTot uPulTot swiUPul
+    op mul uPolTot uPolTot swiUPol
+    op mul uMonTot uMonTot swiUMon
 
     # more units to mine for lower mining speed
-    op mul puPoly tuMono .7142857142857143      # priotizeUnit
-    op add puPoly puPoly tuPoly
-    op mul puPulsar puPoly .7
-    op add puPulsar puPulsar tuPulsar
-    op mul puMega puPulsar 1.25
-    op add puMega puMega tuMega
-    op mul puQuasar puMega .6666666666666666
-    op add puQuasar puQuasar tuQuasar
+    op mul priUPol uMonTot defPriUPol
+    op add priUPol priUPol uPolTot
+    op mul priUPul priUPol defPriUPul
+    op add priUPul priUPul uPulTot
+    op mul priUMeg priUPul defPriUMeg
+    op add priUMeg priUMeg uMegTot
+    op mul priUQua priUMeg defPriUQua
+    op add priUQua priUQua uQuaTot
 
 # Distribute units
 
-    # Quasar
+    # First unit type
 
         distribute_units:
-        op sub diCopper bciCap%2 iCopper            #distributeItem
-        op sub diLead bciCap%2 iLead
-        op sub diTitanium bciCap%2 iTitanium
+        set RatICop 1
+        set RatILea 1
+        set RatISan 1
+        set RatIScr 1
+        set RatICoa 1
+        set RatITit 1
 
-        set diCoal 0
-        set diSand 0
-        set diScrap 0
+        set uTypePri priUQua
+        set uTyp1Pri priUMeg
+        set uTypeTot uQuaTot
+        set uTyp1Tot uMegTot
+        
+        jump calculate_items always
 
-        op max temp diCopper diLead
-        op max temp temp diTitanium
-        jump calculate_t3 greaterThan temp 0
+            distribute_uT2:
+            write out1ITit cell1 0
+            write out1ICoa cell1 1
+            write out1ICop cell1 2
+            write out1ILea cell1 3
+            write out1ISan cell1 4
+            write out1IScr cell1 5
 
-            op sub diCopper bciCap%1 iCopper
-            op sub diLead bciCap%1 iLead
-            op sub diTitanium bciCap%1 iTitanium
-            op sub diCoal bciCap%1 iCoal
-            op sub diSand bciCap%1 iSand
+            write outITit cell1 6
+            write outICoa cell1 7
+            write outICop cell1 8
+            write outILea cell1 9
+            write outISan cell1 10
+            write outIScr cell1 11
 
-            op max temp diCopper diLead
-            op max temp temp diTitanium
-            op max temp temp diCoal
-            op max temp temp diSand
-            jump calculate_t3 greaterThan temp 0
+            set statUT3 statUnit
+            set uTypePri priUPul
+            set uTyp1Pri priUPol
+            set uTypeTot uPulTot
+            set uTyp1Tot uPolTot
+            set iTit defMaxVal
 
-                op sub diCopper bciCap% iCopper
-                op sub diLead bciCap% iLead
-                op sub diTitanium bciCap% iTitanium
-                op sub diCoal bciCap% iCoal
-                op sub diSand bciCap% iSand
-                op sub diScrap bciCap% iScrap
+            jump calculate_ratio always
 
-                op max temp diCopper diLead
-                op max temp temp diTitanium
-                op max temp temp diCoal
-                op max temp temp diSand
-                op max temp temp diScrap
-                jump calculate_t3 greaterThan temp 0
+                distribute_uT1:
+                write out1ICoa cell1 13
+                write out1ICop cell1 14
+                write out1ILea cell1 15
+                write out1ISan cell1 16
+                write out1IScr cell1 17
 
-                    set riCopper 1          # ratioItem
-                    set riLead 1
-                    set riCoal 1
-                    set riSand 1
-                    set riScrap 1
-                    set statusT3 usRally
-                    jump skip_t3 always 0 0
+                write outICoa cell1 19
+                write outICop cell1 20
+                write outILea cell1 21
+                write outISan cell1 22
+                write outIScr cell1 23
+
+                set statUT2 statUnit
+                set uTypePri uMonTot
+                set uTypeTot uMonTot
+                set iCoa defMaxVal
+
+            calculate_ratio:
+            op max inpICop inpICop 1
+            op max inpILea inpILea 1
+            op max inpISan inpISan 1
+            op max inpIScr inpIScr 1
+            op max inpICoa inpICoa 1
+
+            op div inpICop outICop inpICop
+            op div inpILea outILea inpILea
+            op div inpISan outISan inpISan
+            op div inpIScr outIScr inpIScr
+            op div inpICoa outICoa inpICoa
+
+            op sub inpICop 1 inpICop
+            op sub inpILea 1 inpILea
+            op sub inpISan 1 inpISan
+            op sub inpIScr 1 inpIScr
+            op sub inpICoa 1 inpICoa
+
+            #multiply ratio with ratio before
+            op mul RatICop inpICop RatICop
+            op mul RatILea inpILea RatILea
+            op mul RatISan inpISan RatISan
+            op mul RatIScr inpIScr RatIScr
+            op mul RatICoa inpICoa RatICoa
+
+        # if other item reached min, allow the item to mine, yes long pain code
+        calculate_items:
+        set iCapMin defMaxVal
+
+        iCapMin_arr:
+            op add @counter @counter iCapMinArr
+
+                set "null" "null"
+                set iCapMinSet iCopMin
+                jump iCapMinArr_end always
+
+                op max distICop iStoMin iCop
+                set iCapMinSet iLeaMin
+                jump iCapMinArr_end always
+
+                op max distILea iStoMin iLea
+                set iCapMinSet iSanMin
+                jump iCapMinArr_end always
+
+                op max distISan iStoMin iSan
+                set iCapMinSet iScrMin
+                jump iCapMinArr_end always
+
+                op max distIScr iStoMin iScr
+                set iCapMinSet iCoaMin 
+                jump iCapMinArr_end always
+
+                op max distICoa iStoMin iCoa
+                set iCapMinSet iTitMin
+                jump iCapMinArr_end always
+
+            iCapMinArr_end:
+            set iStoMin 0
+            jump iCopMin_skip lessThanEq iCapMinSet iCopMin
+            
+                jump disable_ore greaterThan iCapMinSet iCop
+            
+            iCopMin_skip:
+            jump iLeaMin_skip lessThanEq iCapMinSet iLeaMin
+            
+                jump disable_ore greaterThan iCapMinSet iLea
+            
+            iLeaMin_skip:
+            jump iSanMin_skip lessThanEq iCapMinSet iSanMin
+            
+                jump disable_ore greaterThan iCapMinSet iSan
+            
+            iSanMin_skip:
+            jump iScrMin_skip lessThanEq iCapMinSet iScrMin
+            
+                jump disable_ore greaterThan iCapMinSet iScr
+            
+            iScrMin_skip:
+            jump iCoaMin_skip lessThanEq iCapMinSet iCoaMin
+            
+                jump disable_ore greaterThan iCapMinSet iCoa
+            
+            iCoaMin_skip:
+            jump iTitMin_skip lessThanEq iCapMinSet iTitMin
+            
+                jump iTitMin_skip lessThanEq iCapMinSet iTit
+
+                disable_ore:
+                op min iCapMin iCapMin iCapMinSet
+                set iStoMin defMaxVal
+            
+            iTitMin_skip:
+            op add iCapMinArr iCapMinArr 3
+        jump iCapMin_arr lessThan iCapMinArr 18
+        set iCapMinArr 0
+        op max distITit iStoMin iTit
+
+
+        distribute_item:
+        op min iCopCap iCopMax iCapMin
+        op min iLeaCap iLeaMax iCapMin
+        op min iSanCap iSanMax iCapMin
+        op min iScrCap iScrMax iCapMin
+        op min iCoaCap iCoaMax iCapMin
+        op min iTitCap iTitMax iCapMin
+
+        op sub distICop iCopCap distICop
+        op sub distILea iLeaCap distILea
+        op sub distISan iSanCap distISan
+        op sub distIScr iScrCap distIScr
+        op sub distICoa iCoaCap distICoa
+        op sub distITit iTitCap distITit
+
+        op max distICop distICop 0
+        op max distILea distILea 0
+        op max distISan distISan 0
+        op max distIScr distIScr 0
+        op max distICoa distICoa 0
+        op max distITit distITit 0
+
+        # divide stored with cap to get ratio
+        op div distICop distICop iCopCap
+        op div distILea distILea iLeaCap
+        op div distISan distISan iSanCap
+        op div distIScr distIScr iScrCap
+        op div distICoa distICoa iCoaCap
+        op div distITit distITit iTitCap
+
+        # power vars with amplifier
+        op pow distICop distICop defAmpICop
+        op pow distILea distILea defAmpILea
+        op pow distISan distISan defAmpISan
+        op pow distIScr distIScr defAmpIScr
+        op pow distICoa distICoa defAmpICoa
+        op pow distITit distITit defAmpITit
+
+        # multiply stored with cap
+        op mul distICop distICop iCopCap
+        op mul distILea distILea iLeaCap
+        op mul distISan distISan iSanCap
+        op mul distIScr distIScr iScrCap
+        op mul distICoa distICoa iCoaCap
+        op mul distITit distITit iTitCap
+
+        # multiply vars with ore priotize
+        op mul distICop distICop defPriICop
+        op mul distILea distILea defPriILea
+        op mul distISan distISan defPriISan
+        op mul distIScr distIScr defPriIScr
+        op mul distICoa distICoa defPriICoa
+        op mul distITit distITit defPriITit
+
+        # multiply vars with ratio gotted from before
+        op mul distICop distICop RatICop
+        op mul distILea distILea RatILea
+        op mul distICoa distICoa RatICoa
+        op mul distISan distISan RatISan
+        op mul distIScr distIScr RatIScr
+
+        # vars ratio distribution
+        op add tmp distICop distILea
+        op add tmp tmp distISan
+        op add tmp tmp distIScr
+        op add tmp tmp distICoa
+        op add tmp tmp distITit
+
+        jump calculate_t3 greaterThan tmp 0
+    
+            set statUnit defStaRally
+            jump uTyp1_out always
 
         calculate_t3:
-        set statusT3 usRun
+        set statUnit defUnitStatRun
 
-        op max diCopper diCopper 0
-        op max diLead diLead 0
-        op max diTitanium diTitanium 0
-        op max diCoal diCoal 0
-        op max diSand diSand 0
-        op max diScrap diScrap 0
-
-        #power vars with amplifier
-        op pow diCopper diCopper ampRes
-        op pow diLead diLead ampRes
-        op pow diTitanium diTitanium ampRes
-        op pow diCoal diCoal ampRes
-        op pow diSand diSand ampRes
-        op pow diScrap diScrap ampRes
-
-        #multiply vars with ore priotize
-        op mul diCopper diCopper pCopper
-        op mul diLead diLead pLead
-        op mul diTitanium diTitanium pTitanium
-        op mul diCoal diCoal pCoal
-        op mul diSand diSand pSand
-        op mul diScrap diScrap pScrap
-
-        #vars ratio
-        op add drTotal diCopper diLead
-        op add drTotal drTotal diTitanium
-        op add drTotal drTotal diCoal
-        op add drTotal drTotal diSand
-        op add drTotal drTotal diScrap
-        op div iiCopper diCopper drTotal            # inputItem
-        op div iiLead diLead drTotal
-        op div iiTitanium diTitanium drTotal
-        op div iiCoal diCoal drTotal
-        op div iiSand diSand drTotal
-        op div iiScrap diScrap drTotal
+        op div inpICop distICop tmp
+        op div inpILea distILea tmp
+        op div inpISan distISan tmp
+        op div inpIScr distIScr tmp
+        op div inpICoa distICoa tmp
+        op div inpITit distITit tmp
 
         #multiply vars with units priotize
-        op mul iiCopper iiCopper puQuasar
-        op mul iiLead iiLead puQuasar
-        op mul iiTitanium iiTitanium puQuasar
-        op mul iiCoal iiCoal puQuasar
-        op mul iiSand iiSand puQuasar
-        op mul iiScrap iiScrap puQuasar
+        op mul inpICop inpICop uTypePri
+        op mul inpILea inpILea uTypePri
+        op mul inpISan inpISan uTypePri
+        op mul inpIScr inpIScr uTypePri
+        op mul inpICoa inpICoa uTypePri
+        op mul inpITit inpITit uTypePri
 
         #round vars
-        op add iiCopper iiCopper .5
-        op add iiLead iiLead .5
-        op add iiTitanium iiTitanium .5
-        op add iiCoal iiCoal .5
-        op add iiSand iiSand .5
-        op add iiScrap iiScrap .5
-        op floor iiCopper iiCopper 0
-        op floor iiLead iiLead 0
-        op floor iiTitanium iiTitanium 0
-        op floor iiCoal iiCoal 0
-        op floor iiSand iiSand 0
-        op floor iiScrap iiScrap 0
+        op add inpICop inpICop .5
+        op add inpILea inpILea .5
+        op add inpISan inpISan .5
+        op add inpIScr inpIScr .5
+        op add inpICoa inpICoa .5
+        op add inpITit inpITit .5
+        op floor inpICop inpICop 0
+        op floor inpILea inpILea 0
+        op floor inpISan inpISan 0
+        op floor inpIScr inpIScr 0
+        op floor inpICoa inpICoa 0
+        op floor inpITit inpITit 0
 
-        # Based on hardness
-        op min oiTitanium tuQuasar iiTitanium           # outputItem
-        op sub tluQuasar tuQuasar oiTitanium
-        op min oiCoal tluQuasar iiCoal          # totalLeftUnit
-        op sub tluQuasar tluQuasar oiCoal
-        op min oiCopper tluQuasar iiCopper
-        op sub tluQuasar tluQuasar oiCopper
-        op min oiLead tluQuasar iiLead
-        op sub tluQuasar tluQuasar oiLead
-        op min oiSand tluQuasar iiSand
-        op sub tluQuasar tluQuasar oiSand
-        op min oiScrap tluQuasar iiScrap
-        op sub tluQuasar tluQuasar oiScrap
+        # Distribute Based on hardness
+        op min outITit uTypeTot inpITit
+        op sub tmp uTypeTot outITit
+        op min outICoa tmp inpICoa
+        op sub tmp tmp outICoa
+        op min outICop tmp inpICop
+        op sub tmp tmp outICop
+        op min outILea tmp inpILea
+        op sub tmp tmp outILea
+        op min outISan tmp inpISan
+        op sub tmp tmp outISan
+        op min outIScr tmp inpIScr
+        op sub tmp tmp outIScr
 
-        jump quasar_out equal tluQuasar 0
+        jump uType_out equal tmp 0
 
             # if tlUnit > 0, add into one of resource to prevent chain bind
-            jump t12 equal oiScrap 0
+            jump t12 equal outIScr 0
 
-                op add oiScrap oiScrap tluQuasar
-                jump quasar_out always 0 0
+                op add outIScr outIScr tmp
+                jump uType_out always
 
             t12:
-            jump t13 equal oiSand 0
+            jump t13 equal outISan 0
 
-                op add oiSand oiSand tluQuasar
-                jump quasar_out always 0 0
+                op add outISan outISan tmp
+                jump uType_out always
 
             t13:
-            jump t14 equal oiLead 0
+            jump t14 equal outILea 0
 
-                op add oiLead oiLead tluQuasar
-                jump quasar_out always 0 0
+                op add outILea outILea tmp
+                jump uType_out always
 
             t14:
-            jump t15 equal oiCopper 0
+            jump t15 equal outICop 0
 
-                op add oiCopper oiCopper tluQuasar
-                jump quasar_out always 0 0
+                op add outICop outICop tmp
+                jump uType_out always
 
             t15:
-            jump t16 equal oiCoal 0
+            jump t16 equal outICoa 0
 
-                op add oiCoal oiCoal tluQuasar
-                jump quasar_out always 0 0
+                op add outICoa outICoa tmp
+                jump uType_out always
 
             t16:
-            op add oiTitanium oiTitanium tluQuasar
+            op add outITit outITit tmp
 
-        quasar_out:
-        write oiTitanium cell1 0
-        write oiCoal cell1 1
-        write oiCopper cell1 2
-        write oiLead cell1 3
-        write oiSand cell1 4
-        write oiScrap cell1 5
+        uType_out:
+        set out1ICop outICop
+        set out1ILea outILea
+        set out1ISan outISan
+        set out1IScr outIScr
+        set out1ICoa outICoa
+        set out1ITit outITit
+        jump uTyp1_out equal distJump 2
 
-    # Mega
+    # Second unit type
 
-        #for preventing divide-by-0
-        op max iiCopper iiCopper 1
-        op max iiLead iiLead 1
-        op max iiTitanium iiTitanium 1
-        op max iiCoal iiCoal 1
-        op max iiSand iiSand 1
-        op max iiScrap iiScrap 1        
+        # for preventing divide-by-0
+        op max inpICop inpICop 1
+        op max inpILea inpILea 1
+        op max inpISan inpISan 1
+        op max inpIScr inpIScr 1        
+        op max inpICoa inpICoa 1
+        op max inpITit inpITit 1
 
-        #ore ratio of out/in
-        op div iiCopper oiCopper iiCopper
-        op div iiLead oiLead iiLead
-        op div iiTitanium oiTitanium iiTitanium
-        op div iiCoal oiCoal iiCoal
-        op div iiSand oiSand iiSand
-        op div iiScrap oiScrap iiScrap
+        # ore ratio of out/in
+        op div inpICop outICop inpICop
+        op div inpILea outILea inpILea
+        op div inpISan outISan inpISan
+        op div inpIScr outIScr inpIScr
+        op div inpICoa outICoa inpICoa
+        op div inpITit outITit inpITit
 
-        #ore required to mine by ratioOre
-        op sub riCopper 1 iiCopper
-        op sub riLead 1 iiLead
-        op sub riTitanium 1 iiTitanium
-        op sub riCoal 1 iiCoal
-        op sub riSand 1 iiSand
-        op sub riScrap 1 iiScrap
+        # ore required to mine by ratioOre, for how item get much and get the rest below
+        op sub inpICop 1 inpICop
+        op sub inpILea 1 inpILea
+        op sub inpISan 1 inpISan
+        op sub inpIScr 1 inpIScr
+        op sub inpICoa 1 inpICoa
+        op sub inpITit 1 inpITit
 
-        #multiply distributeOre with ratioOre
-        op mul iiCopper riCopper diCopper
-        op mul iiLead riLead diLead
-        op mul iiTitanium riTitanium diTitanium
-        op mul iiCoal riCoal diCoal
-        op mul iiSand riSand diSand
-        op mul iiScrap riScrap diScrap
+        # multiply ratio with ratio gotted from before
+        op mul RatICop inpICop RatICop
+        op mul RatILea inpILea RatILea
+        op mul RatISan inpISan RatISan
+        op mul RatIScr inpIScr RatIScr
+        op mul RatICoa inpICoa RatICoa
+        op mul RatITit inpITit RatITit
 
-        op add drTotal iiCopper iiLead
-        op add drTotal drTotal iiTitanium
-        op add drTotal drTotal iiCoal
-        op add drTotal drTotal iiSand
-        op add drTotal drTotal iiScrap
-        op div iiCopper iiCopper drTotal
-        op div iiLead iiLead drTotal
-        op div iiTitanium iiTitanium drTotal
-        op div iiCoal iiCoal drTotal
-        op div iiSand iiSand drTotal
-        op div iiScrap iiScrap drTotal
+        # multiply distributeOre with ratioOre
+        op mul inpICop RatICop distICop
+        op mul inpILea RatILea distILea
+        op mul inpISan RatISan distISan
+        op mul inpIScr RatIScr distIScr
+        op mul inpICoa RatICoa distICoa
+        op mul inpITit RatITit distITit
 
-        op mul iiCopper iiCopper puMega
-        op mul iiLead iiLead puMega
-        op mul iiTitanium iiTitanium puMega
-        op mul iiCoal iiCoal puMega
-        op mul iiSand iiSand puMega
-        op mul iiScrap iiScrap puMega
+        op add tmp inpICop inpILea
+        op add tmp tmp inpISan
+        op add tmp tmp inpIScr
+        op add tmp tmp inpICoa
+        op add tmp tmp inpITit
+        op div inpICop inpICop tmp
+        op div inpILea inpILea tmp
+        op div inpISan inpISan tmp
+        op div inpIScr inpIScr tmp
+        op div inpICoa inpICoa tmp
+        op div inpITit inpITit tmp
 
-        op add iiCopper iiCopper .5
-        op add iiLead iiLead .5
-        op add iiTitanium iiTitanium .5
-        op add iiCoal iiCoal .5
-        op add iiSand iiSand .5
-        op add iiScrap iiScrap .5
-        op floor iiCopper iiCopper 0
-        op floor iiLead iiLead 0
-        op floor iiTitanium iiTitanium 0
-        op floor iiCoal iiCoal 0
-        op floor iiSand iiSand 0
-        op floor iiScrap iiScrap 0
+        op mul inpICop inpICop uTyp1Pri
+        op mul inpILea inpILea uTyp1Pri
+        op mul inpISan inpISan uTyp1Pri
+        op mul inpIScr inpIScr uTyp1Pri
+        op mul inpICoa inpICoa uTyp1Pri
+        op mul inpITit inpITit uTyp1Pri
 
-        op min oiTitanium tuMega iiTitanium
-        op sub tluMega tuMega oiTitanium
-        op min oiCoal tluMega iiCoal
-        op sub tluMega tluMega oiCoal
-        op min oiCopper tluMega iiCopper
-        op sub tluMega tluMega oiCopper
-        op min oiLead tluMega iiLead
-        op sub tluMega tluMega oiLead
-        op min oiSand tluMega iiSand
-        op sub tluMega tluMega oiSand
-        op min oiScrap tluMega iiScrap
-        op sub tluMega tluMega oiScrap
+        op add inpICop inpICop .5
+        op add inpILea inpILea .5
+        op add inpISan inpISan .5
+        op add inpIScr inpIScr .5
+        op add inpICoa inpICoa .5
+        op add inpITit inpITit .5
+        op floor inpICop inpICop 0
+        op floor inpILea inpILea 0
+        op floor inpISan inpISan 0
+        op floor inpIScr inpIScr 0
+        op floor inpICoa inpICoa 0
+        op floor inpITit inpITit 0
 
-        jump mega_out equal tluMega 0
+        op min outITit uTyp1Tot inpITit
+        op sub tmp uTyp1Tot outITit
+        op min outICoa tmp inpICoa
+        op sub tmp tmp outICoa
+        op min outICop tmp inpICop
+        op sub tmp tmp outICop
+        op min outILea tmp inpILea
+        op sub tmp tmp outILea
+        op min outISan tmp inpISan
+        op sub tmp tmp outISan
+        op min outIScr tmp inpIScr
+        op sub tmp tmp outIScr
 
-            jump t17 equal oiScrap 0
+        jump uTyp1_out equal tmp 0
 
-                op add oiScrap oiScrap tluMega
-                jump mega_out always 0 0
+            jump t17 equal outIScr 0
+
+                op add outIScr outIScr tmp
+                jump uTyp1_out always
 
             t17:
-            jump t18 equal oiSand 0
+            jump t18 equal outISan 0
 
-                op add oiSand oiSand tluMega
-                jump mega_out always 0 0
+                op add outISan outISan tmp
+                jump uTyp1_out always
 
             t18:
-            jump t19 equal oiLead 0
+            jump t19 equal outILea 0
 
-                op add oiLead oiLead tluMega
-                jump mega_out always 0 0
+                op add outILea outILea tmp
+                jump uTyp1_out always
 
             t19:
-            jump t20 equal oiCopper 0
+            jump t20 equal outICop 0
 
-                op add oiCopper oiCopper tluMega
-                jump mega_out always 0 0
+                op add outICop outICop tmp
+                jump uTyp1_out always
 
             t20:
-            jump t21 equal oiCoal 0
+            jump t21 equal outICoa 0
 
-                op add oiCoal oiCoal tluMega
-                jump mega_out always 0 0
+                op add outICoa outICoa tmp
+                jump uTyp1_out always
 
             t21:
-            op add oiTitanium oiTitanium tluMega
+            op add outITit outITit tmp
 
-        mega_out:
-        write oiTitanium cell1 6
-        write oiCoal cell1 7
-        write oiCopper cell1 8
-        write oiLead cell1 9
-        write oiSand cell1 10
-        write oiScrap cell1 11
-    
-    # pulsar
-
-        op max iiCopper iiCopper 1
-        op max iiLead iiLead 1
-        op max iiCoal iiCoal 1
-        op max iiSand iiSand 1
-        op max iiScrap iiScrap 1
-
-        op div iiCopper oiCopper iiCopper
-        op div iiLead oiLead iiLead
-        op div iiCoal oiCoal iiCoal
-        op div iiSand oiSand iiSand
-        op div iiScrap oiScrap iiScrap
-
-        op sub iiCopper 1 iiCopper
-        op sub iiLead 1 iiLead
-        op sub iiCoal 1 iiCoal
-        op sub iiSand 1 iiSand
-        op sub iiScrap 1 iiScrap
-
-        #multiply ratio with ratio before
-        op mul riCopper iiCopper riCopper
-        op mul riLead iiLead riLead
-        op mul riCoal iiCoal riCoal
-        op mul riSand iiSand riSand
-        op mul riScrap iiScrap riScrap
-
-        skip_t3:
-        set diCoal 0
-        set diSand 0
-        set diScrap 0
-
-        op sub diCopper bciCap%2 iCopper
-        op sub diLead bciCap%2 iLead
-
-        op max temp diCopper diLead
-        jump calculate_t2 greaterThan temp 0
-
-            op sub diCopper bciCap%1 iCopper
-            op sub diLead bciCap%1 iLead
-            op sub diCoal bciCap%1 iCoal
-            op sub diSand bciCap%1 iSand
-
-            op max temp diCopper diLead
-            op max temp temp diCoal
-            op max temp temp diSand
-            jump calculate_t2 greaterThan temp 0
-
-                op sub diCopper bciCap% iCopper
-                op sub diLead bciCap% iLead
-                op sub diCoal bciCap% iCoal
-                op sub diSand bciCap% iSand
-                op sub diScrap bciCap% iScrap
-
-                op max temp diCopper diLead
-                op max temp temp diCoal
-                op max temp temp diSand
-                op max temp temp diScrap
-                jump calculate_t2 greaterThan temp 0
-
-                    set statusT2 usRally
-                    jump skip_t2 always 0 0
-
-        calculate_t2:
-        set statusT2 usRun
-
-        op max diCopper diCopper 0
-        op max diLead diLead 0
-        op max diCoal diCoal 0
-        op max diSand diSand 0
-        op max diScrap diScrap 0
-
-        op pow diCopper diCopper ampRes
-        op pow diLead diLead ampRes
-        op pow diCoal diCoal ampRes
-        op pow diSand diSand ampRes
-        op pow diScrap diScrap ampRes
-
-        op mul diCopper diCopper pCopper
-        op mul diLead diLead pLead
-        op mul diCoal diCoal pCoal
-        op mul diSand diSand pSand
-        op mul diScrap diScrap pScrap
-
-        op mul diCopper diCopper riCopper
-        op mul diLead diLead riLead
-        op mul diCoal diCoal riCoal
-        op mul diSand diSand riSand
-        op mul diScrap diScrap riScrap
-
-        op add drTotal diCopper diLead
-        op add drTotal drTotal diCoal
-        op add drTotal drTotal diSand
-        op add drTotal drTotal diScrap
-        op div iiCopper diCopper drTotal
-        op div iiLead diLead drTotal
-        op div iiCoal diCoal drTotal
-        op div iiSand diSand drTotal
-        op div iiScrap diScrap drTotal
-
-        op mul iiCopper iiCopper puPulsar
-        op mul iiLead iiLead puPulsar
-        op mul iiCoal iiCoal puPulsar
-        op mul iiSand iiSand puPulsar
-        op mul iiScrap iiScrap puPulsar
-
-        op add iiCopper iiCopper .5
-        op add iiLead iiLead .5
-        op add iiCoal iiCoal .5
-        op add iiSand iiSand .5
-        op add iiScrap iiScrap .5
-        op floor iiCopper iiCopper 0
-        op floor iiLead iiLead 0
-        op floor iiCoal iiCoal 0
-        op floor iiSand iiSand 0
-        op floor iiScrap iiScrap 0
-
-        op min oiCoal tuPulsar iiCoal
-        op sub tluPulsar tuPulsar oiCoal
-        op min oiCopper tluPulsar iiCopper
-        op sub tluPulsar tluPulsar oiCopper
-        op min oiLead tluPulsar iiLead
-        op sub tluPulsar tluPulsar oiLead
-        op min oiSand tluPulsar iiSand
-        op sub tluPulsar tluPulsar oiSand
-        op min oiScrap tluPulsar iiScrap
-        op sub tluPulsar tluPulsar oiScrap
+        uTyp1_out:
+        op add distJump distJump 1
+        jump distribute_uT2 equal distJump 1
+        jump distribute_uT1 equal distJump 2
+        set distJump 0
         
-        jump pulsar_out equal tluPulsar 0
-
-            jump t22 equal oiScrap 0
-
-                op add oiScrap oiScrap tluPulsar
-                jump pulsar_out always 0 0
-
-            t22:
-            jump t23 equal oiSand 0
-
-                op add oiSand oiSand tluPulsar
-                jump pulsar_out always 0 0
-
-            t23:
-            jump t24 equal oiLead 0
-
-                op add oiLead oiLead tluPulsar
-                jump pulsar_out always 0 0
-
-            t24:
-            jump t25 equal oiCopper 0
-
-                op add oiCopper oiCopper tluPulsar
-                jump pulsar_out always 0 0
-
-            t25:
-            op add oiCoal oiCoal tluPulsar
-
-        pulsar_out:
-        write oiCoal cell1 13
-        write oiCopper cell1 14
-        write oiLead cell1 15
-        write oiSand cell1 16
-        write oiScrap cell1 17
-
-    # Poly
-
-        op max iiCopper iiCopper 1
-        op max iiLead iiLead 1
-        op max iiCoal iiCoal 1
-        op max iiSand iiSand 1
-        op max iiScrap iiScrap 1
-
-        op div iiCopper oiCopper iiCopper
-        op div iiLead oiLead iiLead
-        op div iiCoal oiCoal iiCoal
-        op div iiSand oiSand iiSand
-        op div iiScrap oiScrap iiScrap
-
-        op sub iiCopper 1 iiCopper
-        op sub iiLead 1 iiLead
-        op sub iiCoal 1 iiCoal
-        op sub iiSand 1 iiSand
-        op sub iiScrap 1 iiScrap
-
-        op mul riCopper iiCopper riCopper
-        op mul riLead iiLead riLead
-        op mul riCoal iiCoal riCoal
-        op mul riSand iiSand riSand
-        op mul riScrap iiScrap riScrap
-
-        op mul iiCopper riCopper diCopper
-        op mul iiLead riLead diLead
-        op mul iiCoal riCoal diCoal
-        op mul iiSand riSand diSand
-        op mul iiScrap riScrap diScrap
-
-        op add drTotal iiCopper iiLead
-        op add drTotal drTotal iiCoal
-        op add drTotal drTotal iiSand
-        op add drTotal drTotal iiScrap
-        op div iiCopper iiCopper drTotal
-        op div iiLead iiLead drTotal
-        op div iiCoal iiCoal drTotal
-        op div iiSand iiSand drTotal
-        op div iiScrap iiScrap drTotal
-
-        op mul iiCopper iiCopper puPoly
-        op mul iiLead iiLead puPoly
-        op mul iiCoal iiCoal puPoly
-        op mul iiSand iiSand puPoly
-        op mul iiScrap iiScrap puPoly
-
-        op add iiCopper iiCopper .5
-        op add iiLead iiLead .5
-        op add iiCoal iiCoal .5
-        op add iiSand iiSand .5
-        op add iiScrap iiScrap .5
-        op floor iiCopper iiCopper 0
-        op floor iiLead iiLead 0
-        op floor iiCoal iiCoal 0
-        op floor iiSand iiSand 0
-        op floor iiScrap iiScrap 0
-        
-        op min oiCoal tuPoly iiCoal
-        op sub tluPoly tuPoly oiCoal
-        op min oiCopper tluPoly iiCopper
-        op sub tluPoly tluPoly oiCopper
-        op min oiLead tluPoly iiLead
-        op sub tluPoly tluPoly oiLead
-        op min oiSand tluPoly iiSand
-        op sub tluPoly tluPoly oiSand
-        op min oiScrap tluPoly iiScrap
-        op sub tluPoly tluPoly oiScrap
-
-        jump poly_out equal tluPoly 0
-
-            jump t26 equal oiScrap 0
-
-                op add oiScrap oiScrap tluPoly
-                jump poly_out always 0 0
-
-            t26:
-            jump t27 equal oiSand 0
-
-                op add oiSand oiSand tluPoly
-                jump poly_out always 0 0
-
-            t27:
-            jump t28 equal oiLead 0
-
-                op add oiLead oiLead tluPoly
-                jump poly_out always 0 0
-
-            t28:
-            jump t29 equal oiCopper 0
-
-                op add oiCopper oiCopper tluPoly
-                jump poly_out always 0 0
-
-            t29:
-            op add oiCoal oiCoal tluPoly
-
-        poly_out:
-        write oiCoal cell1 19
-        write oiCopper cell1 20
-        write oiLead cell1 21
-        write oiSand cell1 22
-        write oiScrap cell1 23
-
-    # Mono
-
-        op max iiCopper iiCopper 1
-        op max iiLead iiLead 1
-        op max iiSand iiSand 1
-        op max iiScrap iiScrap 1        
-
-        op div iiCopper oiCopper iiCopper
-        op div iiLead oiLead iiLead
-        op div iiSand oiSand iiSand
-        op div iiScrap oiScrap iiScrap
-
-        op sub iiCopper 1 iiCopper
-        op sub iiLead 1 iiLead
-        op sub iiSand 1 iiSand
-        op sub iiScrap 1 iiScrap
-
-        op mul riCopper iiCopper riCopper
-        op mul riLead iiLead riLead
-        op mul riSand iiSand riSand
-        op mul riScrap iiScrap riScrap
-
-        skip_t2:
-        set diSand 0
-        set diScrap 0
-
-        op sub diCopper bciCap%2 iCopper
-        op sub diLead bciCap%2 iLead
-
-        op max temp diCopper diLead
-        jump calculate_t1 greaterThan temp 0
-
-            op sub diCopper bciCap%1 iCopper
-            op sub diLead bciCap%1 iLead
-            op sub diSand bciCap%1 iSand
-
-            op max temp diCopper diLead
-            op max temp temp diSand
-            jump calculate_t1 greaterThan temp 0
-
-                op sub diCopper bciCap% iCopper
-                op sub diLead bciCap% iLead
-                op sub diSand bciCap% iSand
-                op sub diScrap bciCap% iScrap
-
-                op max temp diCopper diLead
-                op max temp temp diSand
-                op max temp temp diScrap
-                jump calculate_t1 greaterThan temp 0
-
-                    set statusT1 usRally
-                    jump skip_t1 always 0 0
-
-        calculate_t1:
-        set statusT1 usRun
-
-        op max diCopper diCopper 0
-        op max diLead diLead 0
-        op max diSand diSand 0
-        op max diScrap diScrap 0
-
-        op pow diCopper diCopper ampRes
-        op pow diLead diLead ampRes
-        op pow diSand diSand ampRes
-        op pow diScrap diScrap ampRes
-
-        op mul diCopper diCopper pCopper
-        op mul diLead diLead pLead
-        op mul diSand diSand pSand
-        op mul diScrap diScrap pScrap
-
-        op mul diCopper diCopper riCopper
-        op mul diLead diLead riLead
-        op mul diSand diSand riSand
-        op mul diScrap diScrap riScrap
-
-        op add drTotal diCopper diLead
-        op add drTotal drTotal diSand
-        op add drTotal drTotal diScrap
-        op div iiCopper diCopper drTotal
-        op div iiLead diLead drTotal
-        op div iiSand diSand drTotal
-        op div iiScrap diScrap drTotal
-
-        op mul iiCopper iiCopper tuMono
-        op mul iiLead iiLead tuMono
-        op mul iiSand iiSand tuMono
-        op mul iiScrap iiScrap tuMono
-
-        op add iiCopper iiCopper .5
-        op add iiLead iiLead .5
-        op add iiSand iiSand .5
-        op add iiScrap iiScrap .5
-        op floor iiCopper iiCopper 0
-        op floor iiLead iiLead 0
-        op floor iiSand iiSand 0
-        op floor iiScrap iiScrap 0
-
-        op min oiCopper tuMono iiCopper
-        op sub tluMono tuMono oiCopper
-        op min oiLead tluMono iiLead
-        op sub tluMono tluMono oiLead
-        op min oiSand tluMono iiSand
-        op sub tluMono tluMono oiSand
-        op min oiScrap tluMono iiScrap
-        op sub tluMono tluMono oiScrap
-        
-        jump mono_out equal tluMono 0
-
-            jump t30 equal oiScrap 0
-
-                op add oiScrap oiScrap tluMono
-                jump mono_out always 0 0
-
-            t30:
-            jump t31 equal oiSand 0
-
-                op add oiSand oiSand tluMono
-                jump mono_out always 0 0
-
-            t31:
-            jump t32 equal oiLead 0
-
-                op add oiLead oiLead tluMono
-                jump mono_out always 0 0
-
-            t32:
-            op add oiCopper oiCopper tluMono
-
-        mono_out:
-        write oiCopper cell1 26
-        write oiLead cell1 27
-        write oiSand cell1 28
-        write oiScrap cell1 29
-
-    skip_t1:
+        write out1ICop cell1 26
+        write out1ILea cell1 27
+        write out1ISan cell1 28
+        write out1IScr cell1 29
 
 # Give orders to units
 
-    #check if proocessor unit controlling died
-    op land esuQuasar euQuasar processor1           # enableStatusUnit
-    op land esuMega euMega processor2
-    op land esuPulsar euPulsar processor3
-    op land esuPoly euPoly processor4
-    op land esuMono euMono processor5
-
     #store bit unit switch and write into cell
-    op shl buQuasar esuQuasar 0          # bitUnit
-    op shl buMega esuMega 1
-    op shl buPulsar esuPulsar 2
-    op shl buPoly esuPoly 3
-    op shl buMono esuMono 4
-    op add bit buQuasar buMega
-    op add bit bit buPulsar
-    op add bit bit buPoly
-    op add bit bit buMono
-
-    #check if processor unit counter died
-    op mul bit bit processor6
-
+    op shl bUQua swiUQua 0
+    op shl bUMeg swiUMeg 1
+    op shl bUPul swiUPul 2
+    op shl bUPol swiUPol 3
+    op shl bUMon swiUMon 4
+    op add bit bUQua bUMeg
+    op add bit bit bUPul
+    op add bit bit bUPol
+    op add bit bit bUMon
     write bit cell1 63
 
-    #enable unit 
-    op mul esuQuasar esuQuasar statusT3
-    op mul esuMega esuMega statusT3
-    op mul esuPulsar esuPulsar statusT2
-    op mul esuPoly esuPoly statusT2
-    op mul esuMono esuMono statusT1
-    write esuQuasar cell1 48
-    write esuMega cell1 49
-    write esuPulsar cell1 50
-    write esuPoly cell1 51
-    write esuMono cell1 52
+    #enable unit
+    op mul swiUQua swiUQua statUT3
+    op mul swiUMeg swiUMeg statUT3
+    op mul swiUPul swiUPul statUT2
+    op mul swiUPol swiUPol statUT2
+    op mul swiUMon swiUMon statUnit
+    write swiUQua cell1 48
+    write swiUMeg cell1 49
+    write swiUPul cell1 50
+    write swiUPol cell1 51
+    write swiUMon cell1 52
 
 # Print messages
 
     print_messages:
-    jump bsConfig_dist notEqual bsConfig @surge-alloy
+    jump bSortConf_dist notEqual bSortConf @surge-alloy
 
-        print ">10s timeout unit controlling\nneed 60FPS for speed accuracy\ntotalUnits status  second/loop:\n\n"
-        read temp cell1 54
-        print temp
-        op add puTotal puTotal temp
+        print ">10s timeout unit controlling\nneed 60FPS for speed accuracy\ntotalUnit status  second/loop:\n\n"
+        print uQuaTot
+        op add puTotal 0 uQuaTot           # printUnitTotal
         print " "
-        print esuQuasar
+        print swiUQua
         print "  "
-        read temp cell1 42
-        op idiv temp temp 1
-        op div temp temp 1e3
-        print temp
+        read tmp cell1 42
+        op idiv tmp tmp 1
+        op div tmp tmp 1e3
+        print tmp
         print "\n"
-        read temp cell1 55
-        print temp
-        op add puTotal 0 temp
+        print uMegTot
+        op add puTotal puTotal uMegTot
         print " "
-        print esuMega
+        print swiUMeg
         print "  "
-        read temp cell1 43
-        op idiv temp temp 1
-        op div temp temp 1e3
-        print temp
+        read tmp cell1 43
+        op idiv tmp tmp 1
+        op div tmp tmp 1e3
+        print tmp
         print "\n"
-        read temp cell1 56
-        print temp
-        op add puTotal puTotal temp
+        print uPulTot
+        op add puTotal puTotal uPulTot
         print " "
-        print esuPulsar
+        print swiUPul
         print "  "
-        read temp cell1 44
-        op idiv temp temp 1
-        op div temp temp 1e3
-        print temp
+        read tmp cell1 44
+        op idiv tmp tmp 1
+        op div tmp tmp 1e3
+        print tmp
         print "\n"
-        read temp cell1 57
-        print temp
-        op add puTotal puTotal temp
+        print uPolTot
+        op add puTotal puTotal uPolTot
         print " "
-        print esuPoly
+        print swiUPol
         print "  "
-        read temp cell1 45
-        op idiv temp temp 1
-        op div temp temp 1e3
-        print temp
+        read tmp cell1 45
+        op idiv tmp tmp 1
+        op div tmp tmp 1e3
+        print tmp
         print "\n"
-        read temp cell1 58
-        print temp
-        op add puTotal puTotal temp
+        print uMonTot
+        op add puTotal puTotal uMonTot
         print " "
-        print esuMono
+        print swiUMon
         print "  "
-        read temp cell1 46
-        op idiv temp temp 1
-        op div temp temp 1e3
-        print temp
+        read tmp cell1 46
+        op idiv tmp tmp 1
+        op div tmp tmp 1e3
+        print tmp
         print "\n"
         print puTotal
         print "  "
-        read temp cell1 47
-        op idiv temp temp 1
-        op div temp temp 1e3
-        print temp
+        read tmp cell1 47
+        op idiv tmp tmp 1
+        op div tmp tmp 1e3
+        print tmp
         print "\n "
-        op idiv temp dTime 1
-        op div temp temp 1e3
-        print temp
+        op idiv tmp dTime 1
+        op div tmp tmp 1e3
+        print tmp
         print "\nrally: "
-        print usRally
-        jump print_flush always 0 0
+        print defStaRally
+        jump print_flush always
 
-    bsConfig_dist:
-    jump bsConfig_perf notEqual bsConfig @phase-fabric
+    bSortConf_dist:
+    jump bSortConf_perf notEqual bSortConf @phase-fabric
 
-        print "()\n"
-        read temp cell1 54
-        print temp
-        op add puTotal 0 temp
+        print uQuaTot
+        op add puTotal 0 uQuaTot
         print " "
-        read temp cell1 0
-        print temp
-        op add ore 0 temp
-        print " "
-        read temp cell1 1
-        print temp
-        op add ore1 0 temp
-        print " "
-        read temp cell1 2
-        print temp
-        op add ore2 0 temp
-        print " "
-        read temp cell1 3
-        print temp
-        op add ore3 0 temp
-        print " "
-        read temp cell1 4
-        print temp
-        op add ore4 0 temp
-        print " "
-        read temp cell1 5
-        print temp
-        op add ore5 0 temp
-        print "\n"
-        read temp cell1 55
-        print temp
-        op add puTotal puTotal temp
+        print uMegTot
+        op add puTotal puTotal uMegTot
         print " "
-        read temp cell1 6
-        print temp
-        op add ore ore temp
-        print " "
-        read temp cell1 7
-        print temp
-        op add ore1 ore1 temp
-        print " "
-        read temp cell1 8
-        print temp
-        op add ore2 ore2 temp
-        print " "
-        read temp cell1 9
-        print temp
-        op add ore3 ore3 temp
-        print " "
-        read temp cell1 10
-        print temp
-        op add ore4 ore4 temp
-        print " "
-        read temp cell1 11
-        print temp
-        op add ore5 ore5 temp
-        print "\n"
-        read temp cell1 56
-        print temp
-        op add puTotal puTotal temp
-        print " 0 "
-        read temp cell1 13
-        print temp
-        op add ore1 ore1 temp
-        print " "
-        read temp cell1 14
-        print temp
-        op add ore2 ore2 temp
-        print " "
-        read temp cell1 15
-        print temp
-        op add ore3 ore3 temp
-        print " "
-        read temp cell1 16
-        print temp
-        op add ore4 ore4 temp
-        print " "
-        read temp cell1 17
-        print temp
-        op add ore5 ore5 temp
-        print "\n"
-        read temp cell1 57
-        print temp
-        op add puTotal puTotal temp
-        print " 0 "
-        read temp cell1 19
-        print temp
-        op add ore1 ore1 temp
-        print " "
-        read temp cell1 20
-        print temp
-        op add ore2 ore2 temp
-        print " "
-        read temp cell1 21
-        print temp
-        op add ore3 ore3 temp
-        print " "
-        read temp cell1 22
-        print temp
-        op add ore4 ore4 temp
-        print " "
-        read temp cell1 23
-        print temp
-        op add ore5 ore5 temp
-        print "\n"
-        read temp cell1 58
-        print temp
-        op add puTotal puTotal temp
-        print " 0 0 "
-        read temp cell1 26
-        print temp
-        op add ore2 ore2 temp
-        print " "
-        read temp cell1 27
-        print temp
-        op add ore3 ore3 temp
-        print " "
-        read temp cell1 28
-        print temp
-        op add ore4 ore4 temp
-        print " "
-        read temp cell1 29
-        print temp
-        op add ore5 ore5 temp
-        print "\n"
+        print uPulTot
+        op add puTotal puTotal uPulTot
+        print "\n"
+        print uPolTot
+        op add puTotal puTotal uPolTot
+        print " "
+        print uMonTot
+        op add puTotal puTotal uMonTot
+        print ""
         print puTotal
-        print " "
+        print "\n()\n"
+        read tmp cell1 0
+        print tmp
+        op add ore 0 tmp
+        print " "
+        read tmp cell1 1
+        print tmp
+        op add ore1 0 tmp
+        print " "
+        read tmp cell1 2
+        print tmp
+        op add ore2 0 tmp
+        print " "
+        read tmp cell1 3
+        print tmp
+        op add ore3 0 tmp
+        print " "
+        read tmp cell1 4
+        print tmp
+        op add ore4 0 tmp
+        print " "
+        read tmp cell1 5
+        print tmp
+        op add ore5 0 tmp
+        print "\n"
+        read tmp cell1 6
+        print tmp
+        op add ore ore tmp
+        print " "
+        read tmp cell1 7
+        print tmp
+        op add ore1 ore1 tmp
+        print " "
+        read tmp cell1 8
+        print tmp
+        op add ore2 ore2 tmp
+        print " "
+        read tmp cell1 9
+        print tmp
+        op add ore3 ore3 tmp
+        print " "
+        read tmp cell1 10
+        print tmp
+        op add ore4 ore4 tmp
+        print " "
+        read tmp cell1 11
+        print tmp
+        op add ore5 ore5 tmp
+        print "\n0 "
+        read tmp cell1 13
+        print tmp
+        op add ore1 ore1 tmp
+        print " "
+        read tmp cell1 14
+        print tmp
+        op add ore2 ore2 tmp
+        print " "
+        read tmp cell1 15
+        print tmp
+        op add ore3 ore3 tmp
+        print " "
+        read tmp cell1 16
+        print tmp
+        op add ore4 ore4 tmp
+        print " "
+        read tmp cell1 17
+        print tmp
+        op add ore5 ore5 tmp
+        print "\n0 "
+        read tmp cell1 19
+        print tmp
+        op add ore1 ore1 tmp
+        print " "
+        read tmp cell1 20
+        print tmp
+        op add ore2 ore2 tmp
+        print " "
+        read tmp cell1 21
+        print tmp
+        op add ore3 ore3 tmp
+        print " "
+        read tmp cell1 22
+        print tmp
+        op add ore4 ore4 tmp
+        print " "
+        read tmp cell1 23
+        print tmp
+        op add ore5 ore5 tmp
+        print "\n0 0 "
+        read tmp cell1 26
+        print tmp
+        op add ore2 ore2 tmp
+        print " "
+        read tmp cell1 27
+        print tmp
+        op add ore3 ore3 tmp
+        print " "
+        read tmp cell1 28
+        print tmp
+        op add ore4 ore4 tmp
+        print " "
+        read tmp cell1 29
+        print tmp
+        op add ore5 ore5 tmp
+        print "\n"
         print ore
         print " "
         print ore1
-        print "\n "
+        print " "
         print ore2
         print " "
         print ore3
@@ -1214,37 +1040,156 @@
         print " "
         print ore5
         print " "
-        jump print_flush always 0 0
+        jump print_flush always
 
-    bsConfig_perf:
-    jump bsConfig_plastanium equal bsConfig @plastanium
+    bSortConf_perf:
+    jump bSortConf_res notEqual bSortConf @thorium
 
-        control config sorter1 @plastanium
 
-    bsConfig_plastanium:
-    sensor tScale @this @timescale
-    op div tScale 1 tScale
-    op add counter counter tScale
-    op mod counter counter 3
+        read tmp cell1 26
+        op mul ore2 tmp defPriUPol 
+        read tmp cell1 27
+        op mul ore3 tmp defPriUPol 
+        read tmp cell1 28
+        op mul ore4 tmp defPriUPol 
+        read tmp cell1 29
+        op mul ore5 tmp defPriUPol 
+        op mul uTot uMonTot defPriUPol
+        read tmp cell1 19
+        op mul ore1 tmp defPriUPul
+        read tmp cell1 20
+        op add tmp tmp ore2
+        op mul ore2 tmp defPriUPul
+        read tmp cell1 21
+        op add tmp tmp ore3
+        op mul ore3 tmp defPriUPul
+        read tmp cell1 22
+        op add tmp tmp ore4
+        op mul ore4 tmp defPriUPul
+        read tmp cell1 23
+        op add tmp tmp ore5
+        op mul ore5 tmp defPriUPul
+        op add uTot uTot uPolTot
+        op mul uTot uTot defPriUPul
+        read tmp cell1 13
+        op add tmp tmp ore1
+        op mul ore1 tmp defPriUMeg
+        read tmp cell1 14
+        op add tmp tmp ore2
+        op mul ore2 tmp defPriUMeg
+        read tmp cell1 15
+        op add tmp tmp ore3
+        op mul ore3 tmp defPriUMeg
+        read tmp cell1 16
+        op add tmp tmp ore4
+        op mul ore4 tmp defPriUMeg
+        read tmp cell1 17
+        op add tmp tmp ore5
+        op mul ore5 tmp defPriUMeg
+        op add uTot uTot uPulTot
+        op mul uTot uTot defPriUMeg
+        read tmp cell1 6
+        op mul ore tmp defPriUQua
+        read tmp cell1 7
+        op add tmp tmp ore1
+        op mul ore1 tmp defPriUQua
+        read tmp cell1 8
+        op add tmp tmp ore2
+        op mul ore2 tmp defPriUQua
+        read tmp cell1 9
+        op add tmp tmp ore3
+        op mul ore3 tmp defPriUQua
+        read tmp cell1 10
+        op add tmp tmp ore4
+        op mul ore4 tmp defPriUQua
+        read tmp cell1 11
+        op add tmp tmp ore5
+        op mul ore5 tmp defPriUQua
+        op add uTot uTot uMegTot
+        op mul uTot uTot defPriUQua
+        read tmp cell1 0
+        op add ore tmp ore
+        read tmp cell1 1
+        op add ore1 tmp ore1
+        read tmp cell1 2
+        op add ore2 tmp ore2
+        read tmp cell1 3
+        op add ore3 tmp ore3
+        read tmp cell1 4
+        op add ore4 tmp ore4
+        read tmp cell1 5
+        op add ore5 tmp ore5
+        op add uTot uTot uQuaTot
+        op mul uTot uTot 6.4742
+        op mul ore ore .5263157894736842
+        op mul ore1 ore1 .6666666666666666
+        op mul ore2 ore2 .7692307692307692
+        op mul ore3 ore3 .7692307692307692
+        op add tmp ore ore1
+        op add tmp tmp ore2
+        op add tmp tmp ore3
+        op add tmp tmp ore4
+        op add tmp tmp ore5
+        op div ore ore tmp
+        op div ore1 ore1 tmp
+        op div ore2 ore2 tmp
+        op div ore3 ore3 tmp
+        op div ore4 ore4 tmp
+        op div ore5 ore5 tmp
+        op idiv uTot uTot .01
+        op mul tmp tmp 6.4742
+        op idiv tmp tmp .01
+        op idiv ore ore .0001
+        op idiv ore1 ore1 .0001
+        op idiv ore2 ore2 .0001
+        op idiv ore3 ore3 .0001
+        op idiv ore4 ore4 .0001
+        op idiv ore5 ore5 .0001
+        op div uTot uTot 100
+        op div tmp tmp 100
+        op div ore ore 100
+        op div ore1 ore1 100
+        op div ore2 ore2 100
+        op div ore3 ore3 100
+        op div ore4 ore4 100
+        op div ore5 ore5 100
+        print "Base troughput: "
+        print uTot
+        print " /s\ntotal Throughput: "
+        print tmp
+        print " i/s\n\n "
+        print ore
+        print "%\n "
+        print ore1
+        print "%\n "
+        print ore2
+        print "%\n "
+        print ore3
+        print "%\n "
+        print ore4
+        print "%\n "
+        print ore5
+        print "%"
+
+
+        jump print_flush always
+
+    bSortConf_res:
+    op add counter counter 1
+    op mod counter counter 2
     jump info greaterThanEq counter 1
 
-        print "[slate]5 uType Miner \n[sky]By : Username#3530[][]\n\n :  disable\n  show \n  show each distribution\n  show pefo. and status\n  rally on //release\n\nother configuration on "
-        jump print_flush always 0 0 
+        print "[sky]5 uType uMiner\n[slate]by [#ff7]Username#3530[white]\n\n :  disable\n  show \n  show unit distribution\n  show pefo. and status\n  show res. distribution\n  rally on //release\n\nother configuration on "
+        jump print_flush always 
 
     info:
-    jump info2 greaterThanEq counter 2
-    
-        print "[slate]5 uType Miner \n[sky]Made by Username#3530\nHelped by : Zxtej and SBytes[][]\n\nPriority table, will not mine the ore if below of minres:\n   >%mr2  >%mr1 \n  ㅤ >%mr2  >%mr1 \nㅤ  ㅤ >%mr2 ㅤ >%mr1 "
-        jump print_flush always 0 0 
-
-    info2:
-    print "v6.0 experimental DONT COPY\n\n> better message UI\n> added proc speed indicator\n> dump item if core full\n> evenly distribute\n> more configuration\n> changeable rally loc\n> more\n\n- slower main data processing\n- may buggy"
+    print "v6.1\n\n> Added approximation resources troughput in instant drop situation\n> added more configuration for iTypeMin, iTypeMax, ampRes, Rally and Mining"
 
     print_flush:
     printflush message1
     op sub dTime @time ltime
     set ltime @time
-    jump return always 0 0
-    print "Logic 5 uType Miner made by: Username, Zxtej, sBytes"
+    jump return always
+    print "Logic 5 uType uMiner made by: Username, Zxtej, sBytes"
 
 # End

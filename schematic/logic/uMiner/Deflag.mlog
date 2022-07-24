@@ -1,0 +1,120 @@
+# Read cell
+
+    skip_uMono:
+    read Read cell1 63
+    jump deflagger equal Read lRead
+
+        set lRead Read
+        op and euQuasar Read 1
+        op and euMega Read 2
+        op and euPulsar Read 4
+        op and euPoly Read 8
+        op and euMono Read 16
+
+# Unit deflag
+
+    deflagger:
+    jump skip_uQuasar equal euQuasar false
+
+        ubind @quasar
+        sensor uCont @unit @controlled
+        jump t33 lessThan uCont 2
+
+            ucontrol flag 1 0 0 0 0
+            jump skip_uQuasar always 0 0
+
+        t33:
+        sensor uFlag @unit @flag
+        jump t34 equal uFlag 0
+
+            jump skip_uQuasar equal uCont 1
+
+                ucontrol flag 0 0 0 0 0
+
+        t34:    
+        ucontrol boost 1 0 0 0 0
+        ucontrol targetp @unit 0 0 0 0
+    
+    skip_uQuasar:
+    jump skip_uMega equal euMega false
+
+        ubind @mega
+        sensor uCont @unit @controlled
+        jump t35 lessThan uCont 2
+
+            ucontrol flag 1 0 0 0 0
+            jump skip_uMega always 0 0
+
+        t35:
+        sensor uFlag @unit @flag
+        jump t36 equal uFlag 0
+
+            jump skip_uMega equal uCont 1
+
+                ucontrol flag 0 0 0 0 0
+
+        t36:
+        ucontrol targetp @unit 0 0 0 0
+
+    skip_uMega:
+    jump skip_uPulsar equal euPulsar false
+
+        ubind @pulsar
+        sensor uCont @unit @controlled
+        jump t37 lessThan uCont 2
+
+            ucontrol flag 1 0 0 0 0
+            jump skip_uPulsar always 0 0
+        
+        t37:
+        sensor uFlag @unit @flag
+        jump t38 equal uFlag 0
+
+            jump skip_uPulsar equal uCont 1
+
+                ucontrol flag 0 0 0 0 0
+
+        t38:
+        ucontrol boost 1 0 0 0 0
+        ucontrol targetp @unit 0 0 0 0
+    
+    skip_uPulsar:
+    jump skip_uPoly equal euPoly false
+
+        ubind @poly
+        sensor uCont @unit @controlled
+        jump t39 lessThan uCont 2
+
+            ucontrol flag 1 0 0 0 0
+            jump skip_uPoly always 0 0
+
+        t39:
+        sensor uFlag @unit @flag
+        jump t40 equal uFlag 0
+
+            jump skip_uPoly equal uCont 1
+
+                ucontrol flag 0 0 0 0 0
+
+        t40:
+        ucontrol targetp @unit 0 0 0 0
+
+    skip_uPoly:
+    jump skip_uMono equal euMono false
+
+        ubind @mono
+        sensor uCont @unit @controlled
+        jump t41 lessThan uCont 2
+
+            ucontrol flag 1 0 0 0 0
+            jump skip_uMono always 0 0
+            print "Logic 5 uType Miner made by: Username, Zxtej, sBytes"
+
+        t41:
+        sensor uFlag @unit @flag
+        jump skip_uMono equal uFlag 0
+
+            jump skip_uMono equal uCont 1
+
+                ucontrol flag 0 0 0 0 0
+# End
